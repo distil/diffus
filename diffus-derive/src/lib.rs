@@ -26,8 +26,8 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             });
 
-            let field_diffs_idents = fields.named.iter().map(|field| &field.ident);
-            let field_diffs_copy = fields.named.iter().map(|field| {
+            let edit_fields_ident = fields.named.iter().map(|field| &field.ident);
+            let edit_fields_copy = fields.named.iter().map(|field| {
                 let ident = &field.ident;
 
                 quote!{ #ident @ diffus::Edit::Copy }
@@ -49,9 +49,9 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     pub fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
 
                         match ( #(#field_diffs,)* ) {
-                            ( #(#field_diffs_copy,)* ) => Edit::Copy,
-                            ( #(#field_diffs_idents,)* ) => Edit::Change(
-                                Self::D { #(#field_diffs_idents,)* }
+                            ( #(#edit_fields_copy,)* ) => Edit::Copy,
+                            ( #(#edit_fields_ident,)* ) => Edit::Change(
+                                Self::D { #(#edit_fields_ident,)* }
                             )
                         }
                     }
