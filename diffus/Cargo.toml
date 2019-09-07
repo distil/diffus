@@ -11,12 +11,12 @@ edition = "2018"
 version = "1"
 optional = true
 
-# [dependencies.diffXYZ]
-# version = "xyz"
-# optional = true
+[dependencies.lcs]
+version = "0.2"
+optional = true
 
 [features]
 default = [ "vec-impl" ]
 
-vec-impl = []
+vec-impl = [ "lcs" ]
 indexmap-impl = [ "indexmap" ]

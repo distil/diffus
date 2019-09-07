@@ -6,12 +6,17 @@ use crate::{
 pub enum Edit<'a, T: Diffable<'a>> {
     Insert(&'a T),
     Remove,
-    Copy,
+    Copy, // FIXME UnChanged?
     Change(T::D),
 }
 
 impl<'a, T: Diffable<'a>> Edit<'a, T> {
     // FIXME run doctests default
+    //
+    // Checks if the edit is an insert.
+    //
+    // # Examples
+    //
     // ```
     // assert_eq!(Edit::Insert(&2).is_insert(), true);
     // assert_eq!(Edit::Remove.is_insert(), false);
