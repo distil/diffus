@@ -7,10 +7,8 @@ edition = "2018"
 
 [dependencies]
 
-
 [dependencies.diffus]
-path = ".."
-
+path = "../diffus"
 
 [dependencies.diffus-derive]
 path = "../diffus-derive"

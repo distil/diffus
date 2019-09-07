@@ -77,7 +77,7 @@ mod hashmap {
         use super::*;
 
         #[test]
-        fn hashmap_simple() {
+        fn example() {
             let unity: HashMap<_,_> = [(1,1), (2,2), (3,3)].iter()
                 .cloned().collect();
             let not_unity: HashMap<_,_> = [(1,1), (2,3), (4,4)].iter()
@@ -106,7 +106,7 @@ mod hashmap {
 }
 
 
-#[cfg(feature = "indexmap")]
+#[cfg(feature = "indexmap-impl")]
 mod indexmap {
     use super::*;
 
@@ -151,7 +151,8 @@ mod indexmap {
             }
         }
     }
-
 }
 
-
+#[cfg(feature = "vec")]
+mod vec {
+}

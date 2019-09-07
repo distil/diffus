@@ -11,6 +11,10 @@ pub enum Edit<'a, T: Diffable<'a>> {
 }
 
 impl<'a, T: Diffable<'a>> Edit<'a, T> {
+    // ```
+    // assert_eq!(Edit::Insert(&2).is_insert(), true);
+    // assert_eq!(Edit::Remove.is_insert(), false);
+    // ```
     pub fn is_insert(&self) -> bool {
         if let Self::Insert(_) = self {
             true
@@ -18,6 +22,7 @@ impl<'a, T: Diffable<'a>> Edit<'a, T> {
             false
         }
     }
+    // FIXME doc tests
     pub fn is_remove(&self) -> bool {
         if let Self::Remove = self {
             true
