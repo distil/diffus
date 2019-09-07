@@ -6,7 +6,7 @@ use crate::{
 pub enum Edit<'a, T: Diffable<'a>> {
     Insert(&'a T),
     Remove,
-    Copy, // FIXME UnChanged?
+    Copy, // FIXME needs ref to T when "in the middle" of a diff, see Vec<T> for example
     Change(T::D),
 }
 
