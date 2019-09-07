@@ -1,4 +1,4 @@
-mod diffable_impls;
+pub mod diffable_impls;
 mod edit;
 
 pub use edit::Edit;

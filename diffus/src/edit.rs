@@ -11,6 +11,7 @@ pub enum Edit<'a, T: Diffable<'a>> {
 }
 
 impl<'a, T: Diffable<'a>> Edit<'a, T> {
+    // FIXME run doctests default
     // ```
     // assert_eq!(Edit::Insert(&2).is_insert(), true);
     // assert_eq!(Edit::Remove.is_insert(), false);
