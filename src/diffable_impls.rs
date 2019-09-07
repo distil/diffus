@@ -1,7 +1,8 @@
 use crate::{
-    Edit,
     Diffable,
+    Edit,
 };
+
 
 impl<'a> Diffable<'a> for i32 {
     type D = (&'a i32, &'a i32);
