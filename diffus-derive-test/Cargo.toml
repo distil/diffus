@@ -1,5 +1,5 @@
 [package]
-name = "example"
+name = "diffus-derive-test"
 version = "0.1.0"
 authors = ["Jim Holmström <jim.holmstroem@gmail.com>"]
 edition = "2018"
