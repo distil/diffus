@@ -6,26 +6,37 @@ use diffus_derive::{
 };
 
 #[derive(Diffus, Debug)]
-struct Foo {
+struct Inner {
     x: String,
     y: String,
 }
 
+#[derive(Diffus, Debug)]
+struct Outer {
+    inner: Inner,
+}
+
 fn main() {
-    let left = Foo {
-        x: "bilbo".to_owned(),
-        y: "asdf".to_owned(),
+    let left = Outer {
+        inner: Inner {
+            x: "x".to_owned(),
+            y: "y left".to_owned(),
+        }
     };
-    let right = Foo {
-        x: "bilbo".to_owned(),
-        y: "snagins".to_owned(),
+    let right = Outer {
+        inner: Inner {
+            x: "x".to_owned(),
+            y: "y right".to_owned(),
+        }
     };
 
     let diff = left.diff(&right);
 
     assert_eq!(
-        diff.change().unwrap().y.change().unwrap(),
-        &("asdf", "snagins")
+        diff.change().unwrap()
+            .inner.change().unwrap()
+            .y.change().unwrap(),
+        &("y left", "y right")
     );
 
     println!("left: {:?}", left);
