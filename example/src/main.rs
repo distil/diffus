@@ -1,6 +1,11 @@
-use diffus::Diffus;
+use diffus::{
+    Diffable,
+};
+use diffus_derive::{
+    Diffus,
+};
 
-#[derive(Diffus)]
+#[derive(Diffus, Debug)]
 struct Foo {
     x: String,
     y: String,
@@ -18,5 +23,12 @@ fn main() {
 
     let diff = left.diff(&right);
 
-    assert_eq!(diff.changed().unwrap().y.changed().unwrap(), ("asdf", "snagins"));
+    assert_eq!(
+        diff.change().unwrap().y.change().unwrap(),
+        &("asdf", "snagins")
+    );
+
+    println!("left: {:?}", left);
+    println!("right: {:?}", right);
+    println!("done");
 }

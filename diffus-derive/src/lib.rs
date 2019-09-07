@@ -39,7 +39,6 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 quote!{ self.#ident.diff(&other.#ident) }
             });
 
-
             proc_macro::TokenStream::from(quote! {
                 struct #edited_ident<'a> {
                     #(#edit_fields),*
@@ -47,11 +46,12 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
                 impl<'a> diffus::Diffable<'a> for #ident {
                     type D = #edited_ident<'a>;
-                    pub fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
+
+                    fn diff(&'a self, other: &'a Self) -> diffus::Edit<'a, Self> {
 
                         match ( #(#field_diffs,)* ) {
-                            ( #(#edit_fields_copy,)* ) => Edit::Copy,
-                            ( #(#edit_fields_ident,)* ) => Edit::Change(
+                            ( #(#edit_fields_copy,)* ) => diffus::Edit::Copy,
+                            ( #(#edit_fields_ident,)* ) => diffus::Edit::Change(
                                 Self::D { #(#edit_fields_ident_clone,)* }
                             )
                         }

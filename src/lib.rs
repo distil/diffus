@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 
-trait Diffable<'a> : Sized { // TODO: Why Sized here?
+pub trait Diffable<'a> : Sized { // TODO: Why Sized here?
     type D: Sized + 'a;
 
     fn diff(&'a self, other: &'a Self) -> Edit<'a, Self>;
 }
 
-enum Edit<'a, T: Diffable<'a>> {
+pub enum Edit<'a, T: Diffable<'a>> {
     Insert(&'a T),
     Remove,
     Copy,
