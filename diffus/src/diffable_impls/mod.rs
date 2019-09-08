@@ -1,4 +1,5 @@
 pub mod i32;
+#[cfg(feature = "string-impl")]
 pub mod string;
 pub mod hashmap;
 #[cfg(feature = "vec-impl")]
