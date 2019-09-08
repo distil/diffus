@@ -24,7 +24,7 @@ impl<
             .map(|value_diff| {
                 match value_diff {
                     lcs::DiffComponent::Unchanged(_, _) => Edit::Copy,
-                    lcs::DiffComponent::Insertion(a) => Edit::Insert(*a), // FIXME
+                    lcs::DiffComponent::Insertion(a) => Edit::Insert(*a),
                     lcs::DiffComponent::Deletion(_) => Edit::Remove,
                 }
             })
