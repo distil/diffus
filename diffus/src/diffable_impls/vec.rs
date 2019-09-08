@@ -17,8 +17,6 @@ impl<
     type D = EditedVec<'a, T>;
 
     fn diff(&'a self, other: &'a Self) -> Edit<Self> {
-        use lcs;
-
         let value_diffs = lcs::LcsTable::new(self, other).diff()
             .iter()
             .map(|value_diff| {

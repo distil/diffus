@@ -8,8 +8,6 @@ impl<'a> Diffable<'a> for String {
     type D = Vec<Edit<'a, String>>;
 
     fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
-        use difference;
-
         let difference::Changeset {
             diffs: value_diffs,
             split: _,
