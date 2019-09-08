@@ -20,7 +20,7 @@ impl<'a> Diffable<'a> for String {
             match value_diff {
                 difference::Difference::Same(_) => Edit::Copy,
                 difference::Difference::Rem(_) => Edit::Remove,
-                difference::Difference::Add(a) => Edit::Insert(&a),
+                difference::Difference::Add(a) => Edit::Insert(a),
             }
         })
         .collect::<Vec<_>>();
