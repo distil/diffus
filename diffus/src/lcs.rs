@@ -104,6 +104,25 @@ impl<T: Eq> Lcs<T> {
             self.height - 1,
         )
     }
+
+    /// Same as above but for iterators that don't implement `DoubleEndedIterator`.
+    /// This means we'll iterate backwards. But collections like `HashSet` doesn't have
+    /// a concept of direction anyway.
+    pub(crate) fn diff_unordered<'a>(
+        &self,
+        x: impl Iterator<Item = T>,
+        y: impl Iterator<Item = T>,
+    ) -> (Box<dyn Iterator<Item = Edit<T>> + 'a>, bool)
+        where
+            T: 'a,
+    {
+        self.recursive(
+            itertools::put_back(x),
+            itertools::put_back(y),
+            self.width - 1,
+            self.height - 1,
+        )
+    }
 }
 
 #[cfg(test)]
