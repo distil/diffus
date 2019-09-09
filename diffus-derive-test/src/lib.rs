@@ -5,6 +5,7 @@ use diffus_derive::{
 use diffus::{
     Diffable,
     Edit,
+    EditField,
 };
 
 #[cfg(test)]
@@ -51,9 +52,9 @@ mod tests {
 
         if let Edit::Change(diff) = diff {
             match (diff.inner, diff.other) {
-                (Edit::Change(diff), Edit::Copy) => {
+                (Edit::Change(diff), Edit::Copy(_)) => {
                     match (diff.x, diff.y) {
-                        (Edit::Copy, Edit::Change((left, right))) => {
+                        (EditField::Copy(_), EditField::Change((left, right))) => {
                             assert_eq!(left, "y left");
                             assert_eq!(right, "y right");
                         },

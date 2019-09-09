@@ -8,7 +8,7 @@ impl<'a> Diffable<'a> for i32 {
 
     fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
         if self == other {
-            Edit::Copy
+            Edit::Copy(self)
         } else {
             Edit::Change((self, other))
         }
