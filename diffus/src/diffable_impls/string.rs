@@ -1,7 +1,7 @@
 use crate::{edit::collection, edit::Edit, lcs::Lcs, Diffable};
 
 impl<'a> Diffable<'a> for String {
-    type D = Box<dyn Iterator<Item = collection::Edit<char>> + 'a>;
+    type D = std::collections::vec_deque::IntoIter<collection::Edit<char>>;
 
     fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
         let (s, modified) = Lcs::new(
