@@ -58,23 +58,20 @@ impl<T: Eq> Lcs<T> {
                 .checked_sub(1)
                 .map(|i_minus| self.storage[i_minus * self.width + j]);
 
-            match (current_x, current_y) {
-                (Some(current_x), Some(current_y)) if current_x == current_y => {
-                    i = i - 1;
-                    j = j - 1;
-                    Some((Edit::Copy(current_x), false))
-                },
-                (current_x, Some(current_y)) if current_x.is_none() || left >= above => {
-                    current_x.map(|c| x.put_back(c));
-                    j = j - 1;
-                    Some((Edit::Insert(current_y), true))
-                },
-                (Some(current_x), current_y) if current_y.is_none() || left < above => {
-                    current_y.map(|c| y.put_back(c));
-                    i = i - 1;
-                    Some((Edit::Remove(current_x), true))
-                },
-                _ => None,
+            if current_x.is_some() && current_y.is_some() && current_x == current_y {
+                i = i - 1;
+                j = j - 1;
+                current_x.map(|value| (Edit::Copy(value), false))
+            } else if current_y.is_some() && (current_x.is_none() || left >= above) {
+                current_x.map(|c| x.put_back(c));
+                j = j - 1;
+                current_y.map(|value| (Edit::Insert(value), true))
+            } else if current_x.is_some() && (current_y.is_none() || left < above) {
+                current_y.map(|c| y.put_back(c));
+                i = i - 1;
+                current_x.map(|value| (Edit::Remove(value), true))
+            } else {
+                None
             }
         })
             .fold(
