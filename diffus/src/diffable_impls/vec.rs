@@ -1,4 +1,4 @@
-use crate::{Diffable, Edit, EditSection, lcs::Lcs};
+use crate::{Diffable, edit::Edit, edit::EditSection, lcs::Lcs};
 
 impl<'a, T: Eq + 'a> Diffable<'a> for Vec<T> {
     type D = Box<dyn Iterator<Item = EditSection<&'a T>> + 'a>;

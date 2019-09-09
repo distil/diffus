@@ -1,6 +1,6 @@
 use crate::{
     Diffable,
-    Edit,
+    edit::Edit,
 };
 
 macro_rules! for_primitives {

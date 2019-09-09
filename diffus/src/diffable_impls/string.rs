@@ -1,4 +1,4 @@
-use crate::{Diffable, Edit, EditSection, lcs::Lcs};
+use crate::{Diffable, edit::Edit, edit::EditSection, lcs::Lcs};
 
 impl<'a> Diffable<'a> for String {
     type D = Box<dyn Iterator<Item = EditSection<char>> + 'a>;

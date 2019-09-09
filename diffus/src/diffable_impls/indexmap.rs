@@ -1,7 +1,6 @@
 use crate::{
     Diffable,
-    Edit,
-    EditField,
+    edit::{Edit, map},
 };
 
 
@@ -28,10 +27,10 @@ impl<
             .filter(|(k, _)| !self.contains_key(k));
 
         let value_diffs = unique_other
-            .map(|(k, v)| (k, EditField::Insert(v)))
+            .map(|(k, v)| (k, map::Edit::Insert(v)))
             .chain(
                 unique_self
-                    .map(|(k, _)| (k, EditField::Remove))
+                    .map(|(k, _)| (k, map::Edit::Remove))
             )
             .chain(
                 intersection

@@ -1,4 +1,4 @@
-use super::EditSection;
+use super::edit::EditSection;
 
 pub(crate) struct Lcs<T: Eq> {
     storage: Vec<usize>,
