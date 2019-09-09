@@ -69,7 +69,7 @@ impl<T: Eq> Lcs<T> {
                 Box::new(
                     self.recursive(x, y, i, j - 1)
                         .0
-                        .chain(current_y.into_iter().map(Edit::Add)),
+                        .chain(current_y.into_iter().map(Edit::Insert)),
                 ),
                 true,
             )
@@ -88,7 +88,7 @@ impl<T: Eq> Lcs<T> {
         }
     }
 
-    /// Returns the iterator of changes along with a bool indicating if there were any `Add`/ `Remove`.
+    /// Returns the iterator of changes along with a bool indicating if there were any `Insert`/ `Remove`.
     pub(crate) fn diff<'a>(
         &self,
         x: impl DoubleEndedIterator<Item = T>,
@@ -127,12 +127,12 @@ mod tests {
             vec![
                 Remove('X'),
                 Copy('M'),
-                Add('Z'),
+                Insert('Z'),
                 Copy('J'),
                 Remove('Y'),
                 Copy('A'),
-                Add('W'),
-                Add('X'),
+                Insert('W'),
+                Insert('X'),
                 Copy('U'),
                 Remove('Z')
             ]
@@ -161,13 +161,13 @@ mod tests {
                 Copy("brown"),
                 Remove("fox"),
                 Remove("jumps"),
-                Add("dog"),
-                Add("leaps"),
+                Insert("dog"),
+                Insert("leaps"),
                 Copy("over"),
                 Copy("the"),
                 Copy("lazy"),
                 Remove("dog"),
-                Add("cat")
+                Insert("cat")
             ]
         );
     }

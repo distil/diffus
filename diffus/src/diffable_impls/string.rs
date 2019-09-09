@@ -38,12 +38,12 @@ mod tests {
                 vec![
                     Remove('X'),
                     Copy('M'),
-                    Add('Z'),
+                    Insert('Z'),
                     Copy('J'),
                     Remove('Y'),
                     Copy('A'),
-                    Add('W'),
-                    Add('X'),
+                    Insert('W'),
+                    Insert('X'),
                     Copy('U'),
                     Remove('Z')
                 ]
