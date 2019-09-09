@@ -15,7 +15,7 @@ impl<'a> Diffable<'a> for String {
         if modified {
             Edit::Change(s)
         } else {
-            Edit::Copy(self)
+            Edit::Copy
         }
     }
 }

@@ -32,7 +32,7 @@ impl<'a, K: Eq + std::hash::Hash + std::borrow::Borrow<&'a K> + 'a, V: Diffable<
         if value_diffs.values().any(|v| !v.is_copy()) {
             Edit::Change(value_diffs)
         } else {
-            Edit::Copy(self)
+            Edit::Copy
         }
     }
 }

@@ -15,7 +15,7 @@ impl<'a, T: Eq + 'a> Diffable<'a> for Vec<T> {
         if modified {
             Edit::Change(s)
         } else {
-            Edit::Copy(self)
+            Edit::Copy
         }
     }
 }

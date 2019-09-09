@@ -4,13 +4,13 @@ pub mod map;
 use crate::Diffable;
 
 pub enum Edit<'a, T: Diffable<'a>> {
-    Copy(&'a T),
+    Copy,
     Change(T::D),
 }
 
 impl<'a, T: Diffable<'a>> Edit<'a, T> {
     pub fn is_copy(&self) -> bool {
-        if let Self::Copy(_) = self {
+        if let Self::Copy = self {
             true
         } else {
             false
@@ -37,7 +37,7 @@ impl<'a, T: Diffable<'a>> Edit<'a, T> {
 impl<'a, T: Diffable<'a>> Into<map::Edit<'a, T>> for Edit<'a, T> {
     fn into(self) -> map::Edit<'a, T> {
         match self {
-            Self::Copy(value) => map::Edit::Copy(value),
+            Self::Copy => map::Edit::Copy,
             Self::Change(diff) => map::Edit::Change(diff),
         }
     }

@@ -3,7 +3,7 @@ use super::super::Diffable;
 pub enum Edit<'a, T: Diffable<'a>> {
     Insert(&'a T),
     Remove,
-    Copy(&'a T),
+    Copy,
     Change(T::D),
 }
 
@@ -34,7 +34,7 @@ impl<'a, T: Diffable<'a>> Edit<'a, T> {
         }
     }
     pub fn is_copy(&self) -> bool {
-        if let Self::Copy(_) = self {
+        if let Self::Copy = self {
             true
         } else {
             false

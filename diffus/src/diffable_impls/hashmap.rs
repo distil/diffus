@@ -28,7 +28,7 @@ impl<'a, K: Eq + std::hash::Hash + 'a, V: Diffable<'a> + 'a> Diffable<'a> for Ha
         if value_diffs.values().any(|v| !v.is_copy()) {
             Edit::Change(value_diffs)
         } else {
-            Edit::Copy(self)
+            Edit::Copy
         }
     }
 }
