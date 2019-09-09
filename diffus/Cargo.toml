@@ -17,9 +17,7 @@ version = "0.7"
 optional = true
 
 [features]
-default = [ "vec-impl", "string-impl" ]
+default = []
 
-string-impl = []
-vec-impl = []
 indexmap-impl = [ "indexmap" ]
 uuid-impl = [ "uuid" ]
