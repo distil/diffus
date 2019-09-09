@@ -2,7 +2,7 @@ pub mod diffable_impls;
 mod edit;
 mod lcs;
 
-pub use edit::{Edit, EditField};
+pub use edit::{Edit, EditField, EditSection};
 
 pub trait Diffable<'a>: Sized {
     type D: Sized + 'a;

@@ -1,32 +1,54 @@
-use crate::{
-    Diffable,
-    Edit,
-};
-
+use crate::{Diffable, Edit, EditSection, lcs::Lcs};
 
 impl<'a> Diffable<'a> for String {
-    type D = Vec<Edit<'a, String>>;
+    type D = Box<dyn Iterator<Item = EditSection<char>> + 'a>;
 
     fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
-        let difference::Changeset {
-            diffs: value_diffs,
-            split: _,
-            distance: edit_distance,
-        }  = difference::Changeset::new(self, other, "");
+        let (s, modified) = Lcs::new(
+            self.chars(),
+            || other.chars(),
+            self.chars().count(),
+            other.chars().count(),
+        )
+            .diff(self.chars(), other.chars());
 
-        let value_diffs = value_diffs.iter().map(|value_diff| {
-            match value_diff {
-                difference::Difference::Same(_) => Edit::Copy,
-                difference::Difference::Rem(_) => Edit::Remove,
-                difference::Difference::Add(a) => Edit::Insert(a),
-            }
-        })
-        .collect::<Vec<_>>();
-
-        if edit_distance > 0 {
-            Edit::Change(value_diffs)
+        if modified {
+            Edit::Change(s)
         } else {
-            Edit::Copy
+            Edit::Copy(self)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{*, EditSection::*};
+
+    #[test]
+    fn diff() {
+        use super::Diffable;
+
+        let left = "XMJYAUZ".to_owned();
+        let right = "MZJAWXU".to_owned();
+
+        let diff = left.diff(&right);
+        if let Edit::Change(diff) = diff {
+            assert_eq!(
+                diff.collect::<Vec<_>>(),
+                vec![
+                    Remove('X'),
+                    Copy('M'),
+                    Add('Z'),
+                    Copy('J'),
+                    Remove('Y'),
+                    Copy('A'),
+                    Add('W'),
+                    Add('X'),
+                    Copy('U'),
+                    Remove('Z')
+                ]);
+        } else {
+            unreachable!()
         }
     }
 }

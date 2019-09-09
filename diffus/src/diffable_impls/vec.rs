@@ -1,37 +1,54 @@
-use crate::{
-    Diffable,
-    Edit,
-};
+use crate::{Diffable, Edit, EditSection, lcs::Lcs};
 
+impl<'a, T: Eq + 'a> Diffable<'a> for Vec<T> {
+    type D = Box<dyn Iterator<Item = EditSection<&'a T>> + 'a>;
 
-// TODO Is patience_diff possible without the constraint `Hash`?
-// ref: https://docs.rs/patience-diff/0.1.0/patience_diff/fn.patience_diff.html
+    fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
+        let (s, modified) = Lcs::new(
+            self.iter(),
+            || other.iter(),
+            self.iter().count(),
+            other.iter().count(),
+        )
+            .diff(self.iter(), other.iter());
 
-
-type EditedVec<'a, T> = Vec<Edit<'a, T>>;
-
-impl<
-    'a,
-    T: Eq + std::hash::Hash + Diffable<'a> + 'a,
-> Diffable<'a> for Vec<T> {
-    type D = EditedVec<'a, T>;
-
-    fn diff(&'a self, other: &'a Self) -> Edit<Self> {
-        let value_diffs = lcs::LcsTable::new(self, other).diff()
-            .iter()
-            .map(|value_diff| {
-                match value_diff {
-                    lcs::DiffComponent::Unchanged(_, _) => Edit::Copy,
-                    lcs::DiffComponent::Insertion(a) => Edit::Insert(*a),
-                    lcs::DiffComponent::Deletion(_) => Edit::Remove,
-                }
-            })
-            .collect::<Vec<_>>();
-
-        if value_diffs.iter().any(|value_diff| !value_diff.is_copy()) {
-            Edit::Change(value_diffs)
+        if modified {
+            Edit::Change(s)
         } else {
-            Edit::Copy
+            Edit::Copy(self)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{*, EditSection::*};
+
+    #[test]
+    fn diff() {
+        use super::Diffable;
+
+        let left = b"XMJYAUZ".to_vec();
+        let right = b"MZJAWXU".to_vec();
+
+        let diff = left.diff(&right);
+        if let Edit::Change(diff) = diff {
+            assert_eq!(
+                diff.collect::<Vec<_>>(),
+                vec![
+                    Remove(&b'X'),
+                    Copy(&b'M'),
+                    Add(&b'Z'),
+                    Copy(&b'J'),
+                    Remove(&b'Y'),
+                    Copy(&b'A'),
+                    Add(&b'W'),
+                    Add(&b'X'),
+                    Copy(&b'U'),
+                    Remove(&b'Z')
+                ]);
+        } else {
+            unreachable!()
         }
     }
 }

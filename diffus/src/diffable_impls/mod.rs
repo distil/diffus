@@ -1,4 +1,4 @@
-pub mod i32;
+pub mod primitives;
 #[cfg(feature = "string-impl")]
 pub mod string;
 pub mod hashmap;
