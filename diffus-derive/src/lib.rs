@@ -22,7 +22,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 let ty = &field.ty;
 
                 quote! {
-                    #ident: diffus::EditField<'a, #ty>
+                    #ident: diffus::Edit<'a, #ty>
                 }
             });
 
@@ -31,7 +31,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             let edit_fields_copy = fields.named.iter().map(|field| {
                 let ident = &field.ident;
 
-                quote!{ #ident @ diffus::EditField::Copy(_) }
+                quote!{ #ident @ diffus::Edit::Copy(_) }
             });
             let field_diffs = fields.named.iter().map(|field| {
                 let ident = &field.ident;
