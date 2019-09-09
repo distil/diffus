@@ -6,6 +6,7 @@ edition = "2018"
 
 
 [dependencies]
+itertools = "0.8"
 
 [dependencies.difference]
 version = "2.0"

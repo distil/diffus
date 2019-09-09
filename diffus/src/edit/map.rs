@@ -1,12 +1,9 @@
-use crate::{
-    Diffable,
-};
-
+use super::super::Diffable;
 
 pub enum Edit<'a, T: Diffable<'a>> {
     Insert(&'a T),
     Remove,
-    Copy, // FIXME needs ref to T when "in the middle" of a diff, see Vec<T> for example
+    Copy(&'a T),
     Change(T::D),
 }
 
@@ -37,7 +34,7 @@ impl<'a, T: Diffable<'a>> Edit<'a, T> {
         }
     }
     pub fn is_copy(&self) -> bool {
-        if let Self::Copy = self {
+        if let Self::Copy(_) = self {
             true
         } else {
             false
@@ -65,4 +62,3 @@ impl<'a, T: Diffable<'a>> Edit<'a, T> {
         }
     }
 }
-
