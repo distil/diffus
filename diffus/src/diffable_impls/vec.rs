@@ -15,7 +15,7 @@ impl<'a, T: Eq + 'a> Diffable<'a> for Vec<T> {
         if modified {
             Edit::Change(s)
         } else {
-            Edit::Copy(self)
+            Edit::Copy
         }
     }
 }
@@ -38,12 +38,12 @@ mod tests {
                 vec![
                     Remove(&b'X'),
                     Copy(&b'M'),
-                    Add(&b'Z'),
+                    Insert(&b'Z'),
                     Copy(&b'J'),
                     Remove(&b'Y'),
                     Copy(&b'A'),
-                    Add(&b'W'),
-                    Add(&b'X'),
+                    Insert(&b'W'),
+                    Insert(&b'X'),
                     Copy(&b'U'),
                     Remove(&b'Z')
                 ]

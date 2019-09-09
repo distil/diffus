@@ -8,7 +8,7 @@ macro_rules! for_primitives {
 
                 fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
                     if self == other {
-                        Edit::Copy(self)
+                        Edit::Copy
                     } else {
                         Edit::Change((self, other))
                     }
