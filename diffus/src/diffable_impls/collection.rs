@@ -4,7 +4,7 @@ macro_rules! collection_impl {
     ($($typ:ident),*) => {
         $(
             impl<'a, T: Eq + 'a> Diffable<'a> for $typ<T> {
-                type D = Box<dyn Iterator<Item = collection::Edit<&'a T>> + 'a>;
+                type D = std::collections::vec_deque::IntoIter<collection::Edit<&'a T>>;
 
                 fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
                     let (s, modified) = Lcs::new(
@@ -16,7 +16,7 @@ macro_rules! collection_impl {
                     .diff(self.iter(), other.iter());
 
                     if modified {
-                        Edit::Change(Box::new(s) as Box<dyn Iterator<Item = _>>)
+                        Edit::Change(s)
                     } else {
                         Edit::Copy
                     }
@@ -35,7 +35,7 @@ macro_rules! set_impl {
     ($(($typ:ident, $key_constraint:ident)),*) => {
         $(
             impl<'a, T: Eq + $key_constraint + 'a> Diffable<'a> for $typ<T> {
-                type D = Box<dyn Iterator<Item = collection::Edit<&'a T>> + 'a>;
+                type D = std::collections::vec_deque::IntoIter<collection::Edit<&'a T>>;
 
                 fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
                     let (s, modified) = Lcs::new(
@@ -47,7 +47,7 @@ macro_rules! set_impl {
                         .diff_unordered(self.iter(), other.iter());
 
                     if modified {
-                        Edit::Change(Box::new(s) as Box<dyn Iterator<Item = _>>)
+                        Edit::Change(s)
                     } else {
                         Edit::Copy
                     }

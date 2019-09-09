@@ -43,7 +43,7 @@ impl<T: Eq> Lcs<T> {
         mut y: itertools::PutBack<impl Iterator<Item = T>>,
         mut i: usize,
         mut j: usize,
-    ) -> (impl Iterator<Item = Edit<T>> + 'a, bool)
+    ) -> (std::collections::vec_deque::IntoIter<Edit<T>>, bool)
     where
         T: 'a,
     {
@@ -92,7 +92,7 @@ impl<T: Eq> Lcs<T> {
         &self,
         x: impl DoubleEndedIterator<Item = T> + 'a,
         y: impl DoubleEndedIterator<Item = T> + 'a,
-    ) -> (impl Iterator<Item = Edit<T>> + 'a, bool)
+    ) -> (std::collections::vec_deque::IntoIter<Edit<T>>, bool)
     where
         T: 'a,
     {
@@ -111,7 +111,7 @@ impl<T: Eq> Lcs<T> {
         &self,
         x: impl Iterator<Item = T> + 'a,
         y: impl Iterator<Item = T> + 'a,
-    ) -> (impl Iterator<Item = Edit<T>> + 'a, bool)
+    ) -> (std::collections::vec_deque::IntoIter<Edit<T>>, bool)
         where
             T: 'a,
     {
