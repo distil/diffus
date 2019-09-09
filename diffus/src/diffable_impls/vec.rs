@@ -1,4 +1,4 @@
-use crate::{Diffable, edit::Edit, edit::collection, lcs::Lcs};
+use crate::{edit::collection, edit::Edit, lcs::Lcs, Diffable};
 
 impl<'a, T: Eq + 'a> Diffable<'a> for Vec<T> {
     type D = Box<dyn Iterator<Item = collection::Edit<&'a T>> + 'a>;
@@ -10,7 +10,7 @@ impl<'a, T: Eq + 'a> Diffable<'a> for Vec<T> {
             self.iter().count(),
             other.iter().count(),
         )
-            .diff(self.iter(), other.iter());
+        .diff(self.iter(), other.iter());
 
         if modified {
             Edit::Change(s)
@@ -22,7 +22,7 @@ impl<'a, T: Eq + 'a> Diffable<'a> for Vec<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::{*, collection::Edit::*};
+    use super::{collection::Edit::*, *};
 
     #[test]
     fn diff() {
@@ -46,7 +46,8 @@ mod tests {
                     Add(&b'X'),
                     Copy(&b'U'),
                     Remove(&b'Z')
-                ]);
+                ]
+            );
         } else {
             unreachable!()
         }

@@ -16,8 +16,12 @@ impl<T: Eq + std::fmt::Debug> std::fmt::Debug for Edit<T> {
 
 impl<T: Eq + PartialEq> PartialEq for Edit<T> {
     fn eq(&self, other: &Self) -> bool {
-        let left = match self { Self::Copy(left) | Self::Add(left) | Self::Remove(left) => left };
-        let right = match other { Self::Copy(right) | Self::Add(right) | Self::Remove(right) => right };
+        let left = match self {
+            Self::Copy(left) | Self::Add(left) | Self::Remove(left) => left,
+        };
+        let right = match other {
+            Self::Copy(right) | Self::Add(right) | Self::Remove(right) => right,
+        };
         left == right
     }
 }

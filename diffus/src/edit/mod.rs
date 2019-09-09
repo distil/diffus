@@ -1,9 +1,7 @@
 pub mod collection;
 pub mod map;
 
-use crate::{
-    Diffable,
-};
+use crate::Diffable;
 
 pub enum Edit<'a, T: Diffable<'a>> {
     Copy(&'a T),

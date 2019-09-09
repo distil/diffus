@@ -13,9 +13,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             fields: syn::Fields::Named(ref fields),
             ..
         }) => {
-            let edited_ident = syn::parse_str::<syn::Path>(
-                &format!("Edited{}", ident)
-            ).unwrap();
+            let edited_ident = syn::parse_str::<syn::Path>(&format!("Edited{}", ident)).unwrap();
 
             let edit_fields = fields.named.iter().map(|field| {
                 let ident = &field.ident;
@@ -31,12 +29,12 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             let edit_fields_copy = fields.named.iter().map(|field| {
                 let ident = &field.ident;
 
-                quote!{ #ident @ diffus::Edit::Copy(_) }
+                quote! { #ident @ diffus::Edit::Copy(_) }
             });
             let field_diffs = fields.named.iter().map(|field| {
                 let ident = &field.ident;
 
-                quote!{ self.#ident.diff(&other.#ident) }
+                quote! { self.#ident.diff(&other.#ident) }
             });
 
             proc_macro::TokenStream::from(quote! {
@@ -59,6 +57,6 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             })
         }
-        _ => unreachable!()
+        _ => unreachable!(),
     }
 }

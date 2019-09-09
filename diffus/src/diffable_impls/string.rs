@@ -1,4 +1,4 @@
-use crate::{Diffable, edit::Edit, edit::collection, lcs::Lcs};
+use crate::{edit::collection, edit::Edit, lcs::Lcs, Diffable};
 
 impl<'a> Diffable<'a> for String {
     type D = Box<dyn Iterator<Item = collection::Edit<char>> + 'a>;
@@ -10,7 +10,7 @@ impl<'a> Diffable<'a> for String {
             self.chars().count(),
             other.chars().count(),
         )
-            .diff(self.chars(), other.chars());
+        .diff(self.chars(), other.chars());
 
         if modified {
             Edit::Change(s)
@@ -22,7 +22,7 @@ impl<'a> Diffable<'a> for String {
 
 #[cfg(test)]
 mod tests {
-    use super::{*, collection::Edit::*};
+    use super::{collection::Edit::*, *};
 
     #[test]
     fn diff() {
@@ -46,7 +46,8 @@ mod tests {
                     Add('X'),
                     Copy('U'),
                     Remove('Z')
-                ]);
+                ]
+            );
         } else {
             unreachable!()
         }

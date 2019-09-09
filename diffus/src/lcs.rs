@@ -61,20 +61,28 @@ impl<T: Eq> Lcs<T> {
             let (recursive, modified) = self.recursive(x, y, i - 1, j - 1);
             (
                 Box::new(recursive.chain(current_x.into_iter().map(Edit::Copy))),
-                modified
+                modified,
             )
         } else if current_y.is_some() && (current_x.is_none() || left >= above) {
             current_x.map(|c| x.put_back(c));
-            (Box::new(
-                self.recursive(x, y, i, j - 1).0
-                    .chain(current_y.into_iter().map(Edit::Add)),
-            ), true)
+            (
+                Box::new(
+                    self.recursive(x, y, i, j - 1)
+                        .0
+                        .chain(current_y.into_iter().map(Edit::Add)),
+                ),
+                true,
+            )
         } else if current_x.is_some() && (current_y.is_none() || left < above) {
             current_y.map(|c| y.put_back(c));
-            (Box::new(
-                self.recursive(x, y, i - 1, j).0
-                    .chain(current_x.into_iter().map(Edit::Remove)),
-            ), true)
+            (
+                Box::new(
+                    self.recursive(x, y, i - 1, j)
+                        .0
+                        .chain(current_x.into_iter().map(Edit::Remove)),
+                ),
+                true,
+            )
         } else {
             (Box::new(std::iter::empty()), false)
         }

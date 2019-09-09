@@ -1,7 +1,4 @@
-use crate::{
-    Diffable,
-    edit::Edit,
-};
+use crate::{edit::Edit, Diffable};
 
 macro_rules! for_primitives {
     ($($typ:ty),*) => {
