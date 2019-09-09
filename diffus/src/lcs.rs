@@ -1,4 +1,4 @@
-use super::edit::EditSection;
+use super::edit::collection::Edit;
 
 pub(crate) struct Lcs<T: Eq> {
     storage: Vec<usize>,
@@ -43,7 +43,7 @@ impl<T: Eq> Lcs<T> {
         mut y: itertools::PutBack<impl Iterator<Item = T>>,
         i: usize,
         j: usize,
-    ) -> (Box<dyn Iterator<Item = EditSection<T>> + 'a>, bool)
+    ) -> (Box<dyn Iterator<Item = Edit<T>> + 'a>, bool)
     where
         T: 'a,
     {
@@ -60,20 +60,20 @@ impl<T: Eq> Lcs<T> {
         if current_x.is_some() && current_y.is_some() && current_x == current_y {
             let (recursive, modified) = self.recursive(x, y, i - 1, j - 1);
             (
-                Box::new(recursive.chain(current_x.into_iter().map(EditSection::Copy))),
+                Box::new(recursive.chain(current_x.into_iter().map(Edit::Copy))),
                 modified
             )
         } else if current_y.is_some() && (current_x.is_none() || left >= above) {
             current_x.map(|c| x.put_back(c));
             (Box::new(
                 self.recursive(x, y, i, j - 1).0
-                    .chain(current_y.into_iter().map(EditSection::Add)),
+                    .chain(current_y.into_iter().map(Edit::Add)),
             ), true)
         } else if current_x.is_some() && (current_y.is_none() || left < above) {
             current_y.map(|c| y.put_back(c));
             (Box::new(
                 self.recursive(x, y, i - 1, j).0
-                    .chain(current_x.into_iter().map(EditSection::Remove)),
+                    .chain(current_x.into_iter().map(Edit::Remove)),
             ), true)
         } else {
             (Box::new(std::iter::empty()), false)
@@ -85,7 +85,7 @@ impl<T: Eq> Lcs<T> {
         &self,
         x: impl DoubleEndedIterator<Item = T>,
         y: impl DoubleEndedIterator<Item = T>,
-    ) -> (Box<dyn Iterator<Item = EditSection<T>> + 'a>, bool)
+    ) -> (Box<dyn Iterator<Item = Edit<T>> + 'a>, bool)
     where
         T: 'a,
     {
@@ -113,7 +113,7 @@ mod tests {
         )
         .diff(left.chars(), right.chars());
         assert!(modified);
-        use super::EditSection::*;
+        use super::Edit::*;
         assert_eq!(
             s.collect::<Vec<_>>(),
             vec![
@@ -144,7 +144,7 @@ mod tests {
         )
         .diff(left.split_whitespace(), right.split_whitespace());
         assert!(modified);
-        use super::EditSection::*;
+        use super::Edit::*;
         assert_eq!(
             s.collect::<Vec<_>>(),
             vec![

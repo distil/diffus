@@ -1,7 +1,7 @@
-use crate::{Diffable, edit::Edit, edit::EditSection, lcs::Lcs};
+use crate::{Diffable, edit::Edit, edit::collection, lcs::Lcs};
 
 impl<'a, T: Eq + 'a> Diffable<'a> for Vec<T> {
-    type D = Box<dyn Iterator<Item = EditSection<&'a T>> + 'a>;
+    type D = Box<dyn Iterator<Item = collection::Edit<&'a T>> + 'a>;
 
     fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
         let (s, modified) = Lcs::new(
@@ -22,7 +22,7 @@ impl<'a, T: Eq + 'a> Diffable<'a> for Vec<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::{*, EditSection::*};
+    use super::{*, collection::Edit::*};
 
     #[test]
     fn diff() {
