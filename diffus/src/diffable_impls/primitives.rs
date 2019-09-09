@@ -1,6 +1,7 @@
 use crate::{edit::Edit, Diffable};
 
-macro_rules! for_primitives {
+
+macro_rules! primitive_impl {
     ($($typ:ty),*) => {
         $(
             impl<'a> Diffable<'a> for $typ {
@@ -18,4 +19,7 @@ macro_rules! for_primitives {
     }
 }
 
-for_primitives! { i64, i32, i16, i8, u64, u32, u16, u8, char }
+primitive_impl! { i64, i32, i16, i8, u64, u32, u16, u8, char }
+
+#[cfg(feature = "uuid-impl")]
+primitive_impl!{ uuid::Uuid }
