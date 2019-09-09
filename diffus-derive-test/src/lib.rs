@@ -1,26 +1,134 @@
-use diffus_derive::{
-    Diffus,
-};
-
-use diffus::{
-    Diffable,
-    Edit,
-};
-
 #[cfg(test)]
-mod tests {
-    use super::*;
+#[allow(unused_variables)]
+#[allow(dead_code)]
+mod test {
+    use diffus_derive::{
+        Diffus,
+    };
+
+    use diffus::{
+        self,
+        Diffable,
+        edit,
+    };
+
+    #[derive(Diffus)]
+    enum NestedTest {
+        T { test: Test },
+    }
+
+    #[derive(Debug, Diffus, PartialEq, Eq)]
+    enum Test {
+        A,
+        B(String),
+        Bd(String, u32),
+        C { x: u32 },
+        Cd { x: u32, y: String },
+    }
+
+    #[test]
+    fn enm_nested_test() {
+        let left = NestedTest::T {
+            test: Test::C { x: 32 },
+        };
+        let right = NestedTest::T {
+            test: Test::C { x: 43 },
+        };
+
+        let diff = left.diff(&right);
+
+        if let diffus::edit::enm::Edit::AssociatedChanged(EditedNestedTest::T { test }) = diff.change().unwrap() {
+            if let diffus::edit::enm::Edit::AssociatedChanged(EditedTest::C { x }) = test.change().unwrap() {
+                assert_eq!(
+                    x.change(),
+                    Some(&(&32, &43))
+                );
+            }else {
+                unreachable!();
+            }
+        } else {
+            unreachable!();
+        }
+    }
+
+
+    #[test]
+    fn enm_associated_not_change_tuple_variant() {
+        let left = Test::Bd(
+            "Bilbo Baggins".to_owned(),
+            42,
+        );
+        let right = Test::Bd(
+            "Bilbo Baggins".to_owned(),
+            42,
+        );
+
+        assert!(left.diff(&right).is_copy());
+    }
+
+    #[test]
+    fn enm_associated_not_change() {
+        let left = Test::Cd {
+            x: 42,
+            y: "Bilbo Baggins".to_owned(),
+        };
+        let right = Test::Cd {
+            x: 42,
+            y: "Bilbo Baggins".to_owned(),
+        };
+
+        assert!(left.diff(&right).is_copy());
+    }
+
+    #[test]
+    fn enm_associated_change() {
+        let left = Test::Cd {
+            x: 42,
+            y: "Bilbo Baggins".to_owned(),
+        };
+        let right = Test::Cd {
+            x: 42,
+            y: "Frodo Baggins".to_owned(),
+        };
+        if let diffus::Edit::Change(diffus::edit::enm::Edit::AssociatedChanged(EditedTest::Cd { x, y })) = left.diff(&right) {
+            assert!(x.is_copy());
+            assert!(y.is_change());
+        } else {
+            unreachable!()
+        }
+    }
+
+    #[test]
+    fn enm_variant_change() {
+        let left = Test::Cd {
+            x: 42,
+            y: "Bilbo Baggins".to_owned(),
+        };
+        let right = Test::B("Frodo Baggins".to_owned());
+        if let diffus::Edit::Change(diffus::edit::enm::Edit::VariantChanged((l, r))) = left.diff(&right) {
+            assert_eq!(&left, l);
+            assert_eq!(&right, r);
+        } else {
+            unreachable!()
+        }
+    }
 
     #[derive(Diffus, Debug)]
     struct Inner {
         x: String,
-        y: String,
+        y: u32,
     }
+
+    #[derive(Diffus)]
+    struct Unit;
+
+    #[derive(Diffus, Debug)]
+    struct Unnamed(u32, String);
 
     #[derive(Diffus, Debug)]
     struct Outer {
         inner: Inner,
-        other: i32,
+        lit: i32,
     }
 
     #[test]
@@ -28,16 +136,16 @@ mod tests {
         let left = Outer {
             inner: Inner {
                 x: "x".to_owned(),
-                y: "y left".to_owned(),
+                y: 13,
             },
-            other: 3,
+            lit: 3,
         };
         let right = Outer {
             inner: Inner {
                 x: "x".to_owned(),
-                y: "y right".to_owned(),
+                y: 37,
             },
-            other: 3,
+            lit: 3,
         };
 
         let diff = left.diff(&right);
@@ -46,25 +154,8 @@ mod tests {
             diff.change().unwrap()
                 .inner.change().unwrap()
                 .y.change().unwrap(),
-            &("y left", "y right")
+            &(&13, &37)
         );
-
-        if let Edit::Change(diff) = diff {
-            match (diff.inner, diff.other) {
-                (Edit::Change(diff), Edit::Copy) => {
-                    match (diff.x, diff.y) {
-                        (Edit::Copy, Edit::Change((left, right))) => {
-                            assert_eq!(left, "y left");
-                            assert_eq!(right, "y right");
-                        },
-                        _ => unreachable!("here"),
-                    }
-                },
-                _ => unreachable!("there"),
-            }
-        } else {
-            unreachable!("somewhere")
-        }
 
     }
 }

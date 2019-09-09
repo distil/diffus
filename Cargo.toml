@@ -2,7 +2,7 @@
 members = [
     "diffus",
     "diffus-derive",
-#    "diffus-derive-test",
+    "diffus-derive-test",
 ]
 
-default-members = [ "diffus" ]
+default-members = [ "diffus", "diffus-derive", "diffus-derive-test" ]
