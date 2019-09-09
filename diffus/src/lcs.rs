@@ -37,67 +37,69 @@ impl<T: Eq> Lcs<T> {
         }
     }
 
-    fn recursive<'a>(
+    fn diff_impl<'a>(
         &self,
         mut x: itertools::PutBack<impl Iterator<Item = T>>,
         mut y: itertools::PutBack<impl Iterator<Item = T>>,
-        i: usize,
-        j: usize,
-    ) -> (Box<dyn Iterator<Item = Edit<T>> + 'a>, bool)
+        mut i: usize,
+        mut j: usize,
+    ) -> (impl Iterator<Item = Edit<T>> + 'a, bool)
     where
         T: 'a,
     {
-        let current_x = x.next();
-        let current_y = y.next();
+        let (queue, modified) = std::iter::from_fn(move || {
+            let current_x = x.next();
+            let current_y = y.next();
 
-        let left = j
-            .checked_sub(1)
-            .map(|j_minus| self.storage[i * self.width + j_minus]);
-        let above = i
-            .checked_sub(1)
-            .map(|i_minus| self.storage[i_minus * self.width + j]);
+            let left = j
+                .checked_sub(1)
+                .map(|j_minus| self.storage[i * self.width + j_minus]);
+            let above = i
+                .checked_sub(1)
+                .map(|i_minus| self.storage[i_minus * self.width + j]);
 
-        if current_x.is_some() && current_y.is_some() && current_x == current_y {
-            let (recursive, modified) = self.recursive(x, y, i - 1, j - 1);
-            (
-                Box::new(recursive.chain(current_x.into_iter().map(Edit::Copy))),
-                modified,
-            )
-        } else if current_y.is_some() && (current_x.is_none() || left >= above) {
-            current_x.map(|c| x.put_back(c));
-            (
-                Box::new(
-                    self.recursive(x, y, i, j - 1)
-                        .0
-                        .chain(current_y.into_iter().map(Edit::Insert)),
-                ),
-                true,
-            )
-        } else if current_x.is_some() && (current_y.is_none() || left < above) {
-            current_y.map(|c| y.put_back(c));
-            (
-                Box::new(
-                    self.recursive(x, y, i - 1, j)
-                        .0
-                        .chain(current_x.into_iter().map(Edit::Remove)),
-                ),
-                true,
-            )
-        } else {
-            (Box::new(std::iter::empty()), false)
-        }
+            match (current_x, current_y) {
+                (Some(current_x), Some(current_y)) if current_x == current_y => {
+                    i = i - 1;
+                    j = j - 1;
+                    Some((Edit::Copy(current_x), false))
+                },
+                (current_x, Some(current_y)) if current_x.is_none() || left >= above => {
+                    current_x.map(|c| x.put_back(c));
+                    j = j - 1;
+                    Some((Edit::Insert(current_y), true))
+                },
+                (Some(current_x), current_y) if current_y.is_none() || left < above => {
+                    current_y.map(|c| y.put_back(c));
+                    i = i - 1;
+                    Some((Edit::Remove(current_x), true))
+                },
+                _ => None,
+            }
+        })
+            .fold(
+                (std::collections::VecDeque::with_capacity(self.width + self.height), false),
+                |(mut queue, modified), (edit, edit_modified)| {
+                    queue.push_front(edit);
+                    (
+                        queue,
+                        modified || edit_modified
+                    )
+                });
+
+        (queue.into_iter(), modified)
     }
 
     /// Returns the iterator of changes along with a bool indicating if there were any `Insert`/ `Remove`.
     pub(crate) fn diff<'a>(
         &self,
-        x: impl DoubleEndedIterator<Item = T>,
-        y: impl DoubleEndedIterator<Item = T>,
-    ) -> (Box<dyn Iterator<Item = Edit<T>> + 'a>, bool)
+        x: impl DoubleEndedIterator<Item = T> + 'a,
+        y: impl DoubleEndedIterator<Item = T> + 'a,
+    ) -> (impl Iterator<Item = Edit<T>> + 'a, bool)
     where
         T: 'a,
     {
-        self.recursive(
+        self.diff_impl(
             itertools::put_back(x.rev()),
             itertools::put_back(y.rev()),
             self.width - 1,
@@ -110,13 +112,13 @@ impl<T: Eq> Lcs<T> {
     /// a concept of direction anyway.
     pub(crate) fn diff_unordered<'a>(
         &self,
-        x: impl Iterator<Item = T>,
-        y: impl Iterator<Item = T>,
-    ) -> (Box<dyn Iterator<Item = Edit<T>> + 'a>, bool)
+        x: impl Iterator<Item = T> + 'a,
+        y: impl Iterator<Item = T> + 'a,
+    ) -> (impl Iterator<Item = Edit<T>> + 'a, bool)
         where
             T: 'a,
     {
-        self.recursive(
+        self.diff_impl(
             itertools::put_back(x),
             itertools::put_back(y),
             self.width - 1,

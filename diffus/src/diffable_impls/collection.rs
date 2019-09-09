@@ -16,7 +16,7 @@ macro_rules! collection_impl {
                     .diff(self.iter(), other.iter());
 
                     if modified {
-                        Edit::Change(s)
+                        Edit::Change(Box::new(s) as Box<dyn Iterator<Item = _>>)
                     } else {
                         Edit::Copy
                     }
@@ -47,7 +47,7 @@ macro_rules! set_impl {
                         .diff_unordered(self.iter(), other.iter());
 
                     if modified {
-                        Edit::Change(s)
+                        Edit::Change(Box::new(s) as Box<dyn Iterator<Item = _>>)
                     } else {
                         Edit::Copy
                     }

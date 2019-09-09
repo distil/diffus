@@ -13,7 +13,7 @@ impl<'a> Diffable<'a> for String {
         .diff(self.chars(), other.chars());
 
         if modified {
-            Edit::Change(s)
+            Edit::Change(Box::new(s) as Box<dyn Iterator<Item = _>>)
         } else {
             Edit::Copy
         }
