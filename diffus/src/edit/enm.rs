@@ -1,3 +1,4 @@
+// TODO figure out the reason why it's not Edit<T> { .., AssociatedChanged(T::D) }
 pub enum Edit<'a, T, D> {
     Copy,
     VariantChanged((&'a T, &'a T)),
@@ -11,9 +12,5 @@ impl<'a, T, D> Edit<'a, T, D> {
         } else {
             false
         }
-    }
-
-    pub fn is_change(&self) -> bool {
-        !self.is_copy()
     }
 }

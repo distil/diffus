@@ -1,27 +1,45 @@
-use crate::{edit, edit::Edit, Diffable};
-
-enum EditedOption<'a, T> {
-    Some(T::D),
-    None,
-}
+use crate::{edit::{self, enm}, edit::Edit, Diffable};
 
 impl<'a, T: Diffable<'a> + 'a> Diffable<'a> for Option<T> {
-    type D = edit::enm::Edit<'a, Self, EditedOption<'a, T>>;
+    type D = enm::Edit<'a, Self, T::D>;
 
     fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
-
         match (self, other) {
             (None, None) => Edit::Copy,
-            (Some(self_value), Some(self_other)) => {
-                let value_diff = self_value.diff(self_other);
+            (None, _) | (_, None) => Edit::Change(
+                enm::Edit::VariantChanged((self, other))
+            ),
+            (Some(a), Some(b)) => match a.diff(&b) {
+                Edit::Copy => Edit::Copy,
+                Edit::Change(d) => Edit::Change(enm::Edit::AssociatedChanged(d)),
+            },
+        }
+    }
+}
 
-                if let Edit::Copy = value_diff {
-                    Edit::Copy
-                } else {
-                    edit::enm::Change(Some(value_diff)) // VALUES DIFFER
-                }
-            }
-            (_, _) => Edit::Copy, // KEYS DIFFER
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn is_copy() {
+        assert!((None as Option<u32>).diff(&None).is_copy());
+        assert!(Some(3).diff(&Some(3)).is_copy());
+    }
+
+    #[test]
+    fn variant_changed() {
+        if let enm::Edit::VariantChanged((&None, &Some(3))) = None.diff(&Some(3)).change().unwrap() {
+        } else {
+            unreachable!();
+        }
+    }
+
+    #[test]
+    fn associate_change() {
+        if let enm::Edit::AssociatedChanged((&1, &2)) = Some(1).diff(&Some(2)).change().unwrap() {
+        } else {
+            unreachable!();
         }
     }
 }
