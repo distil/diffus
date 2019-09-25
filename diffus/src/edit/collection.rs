@@ -1,29 +1,56 @@
+#[derive(PartialEq, Eq, Debug)]
 pub enum Edit<T: Eq> {
     Copy(T),
     Insert(T),
     Remove(T),
 }
 
-impl<T: Eq + std::fmt::Debug> std::fmt::Debug for Edit<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        match self {
-            Self::Copy(value) => write!(f, "Copy({:?})", value),
-            Self::Insert(value) => write!(f, "Insert({:?})", value),
-            Self::Remove(value) => write!(f, "Remove({:?})", value),
+impl<T: Eq> Edit<T> {
+    pub fn is_copy(&self) -> bool {
+        if let Self::Copy(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_insert(&self) -> bool {
+        if let Self::Insert(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_remove(&self) -> bool {
+        if let Self::Remove(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn copy(&self) -> Option<&T> {
+        if let Self::Copy(value) = self {
+            Some(value)
+        } else {
+            None
+        }
+    }
+
+    pub fn insert(&self) -> Option<&T> {
+        if let Self::Insert(value) = self {
+            Some(value)
+        } else {
+            None
+        }
+    }
+
+    pub fn remove(&self) -> Option<&T> {
+        if let Self::Remove(value) = self {
+            Some(value)
+        } else {
+            None
         }
     }
 }
-
-impl<T: Eq + PartialEq> PartialEq for Edit<T> {
-    fn eq(&self, other: &Self) -> bool {
-        let left = match self {
-            Self::Copy(left) | Self::Insert(left) | Self::Remove(left) => left,
-        };
-        let right = match other {
-            Self::Copy(right) | Self::Insert(right) | Self::Remove(right) => right,
-        };
-        left == right
-    }
-}
-
-impl<T: Eq> Eq for Edit<T> {}

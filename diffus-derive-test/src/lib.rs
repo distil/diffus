@@ -9,7 +9,6 @@ mod test {
     use diffus::{
         self,
         Diffable,
-        edit,
     };
 
     #[derive(Diffus)]
@@ -90,7 +89,7 @@ mod test {
             x: 42,
             y: "Frodo Baggins".to_owned(),
         };
-        if let diffus::Edit::Change(diffus::edit::enm::Edit::AssociatedChanged(EditedTest::Cd { x, y })) = left.diff(&right) {
+        if let diffus::edit::Edit::Change(diffus::edit::enm::Edit::AssociatedChanged(EditedTest::Cd { x, y })) = left.diff(&right) {
             assert!(x.is_copy());
             assert!(y.is_change());
         } else {
@@ -105,7 +104,7 @@ mod test {
             y: "Bilbo Baggins".to_owned(),
         };
         let right = Test::B("Frodo Baggins".to_owned());
-        if let diffus::Edit::Change(diffus::edit::enm::Edit::VariantChanged((l, r))) = left.diff(&right) {
+        if let diffus::edit::Edit::Change(diffus::edit::enm::Edit::VariantChanged(l, r)) = left.diff(&right) {
             assert_eq!(&left, l);
             assert_eq!(&right, r);
         } else {

@@ -23,29 +23,20 @@ type Output = proc_macro2::TokenStream;
 // FIXME think about how we want to organize the namespacing of all things ex.
 // enm::Edit::VariantChange
 
-fn edit_field(
-    field: &syn::Field,
-) -> Output {
-    match field {
-        syn::Field { ident: Some(ident), .. } => {
-            let unnamed_field = edit_field(&syn::Field { ident: None, ..field.clone() });
-
-            quote! {
-                #ident: #unnamed_field
-            }
-        },
-        syn::Field { ident: None, ty, .. } => {
-            quote! {
-                diffus::Edit<'a, #ty>
-            }
-        },
-    }
-}
-
 fn edit_fields(
     fields: &syn::Fields,
 ) -> Output {
-    let edit_fields = fields.iter().map(edit_field);
+    let edit_fields = fields.iter()
+        .map(|field| {
+            match field {
+                syn::Field { ident: Some(ident), ty, .. } => quote! {
+                    #ident: diffus::edit::Edit<'a, #ty>
+                },
+                        syn::Field { ident: None, ty, .. } => quote! {
+                    diffus::edit::Edit<'a, #ty>
+                },
+            }
+        });
 
     quote! { #(#edit_fields),* }
 }
@@ -98,52 +89,40 @@ fn renamed_field_idents(
     quote! { #(#field_idents),* }
 }
 
-fn field_matches_copy(
-    enumerated_field: (usize, &syn::Field),
-) -> Output {
-    let field_ident = field_ident(enumerated_field, "");
-
-    quote! { #field_ident @ diffus::Edit::Copy }
-}
-
 fn matches_all_copy(
     fields: &syn::Fields
 ) -> Output {
-    let edit_fields_copy = fields.iter().enumerate().map(field_matches_copy);
-    quote! {
-        ( #(#edit_fields_copy),* ) => diffus::Edit::Copy
-    }
-}
+    let edit_fields_copy = fields.iter().enumerate()
+        .map(|enumerated_field| {
+            let field_ident = field_ident(enumerated_field, "");
 
-fn field_name(
-    enumerated_field: (usize, &syn::Field)
-) -> Output {
-    match enumerated_field {
-        (_, syn::Field { ident: Some(ident), .. }) => {
-            quote! { #ident }
-        }
-        (i, syn::Field { ident: None, .. }) => {
-            let ident = unnamed_field_name(i);
-
-            quote! { #ident }
-        }
-    }
-}
-
-fn field_diff(
-    enumerated_field: (usize, &syn::Field),
-) -> Output {
-    let field_name = field_name(enumerated_field);
+            quote! { #field_ident @ diffus::edit::Edit::Copy }
+        });
 
     quote! {
-        self.#field_name.diff(&other.#field_name)
+        ( #(#edit_fields_copy),* ) => diffus::edit::Edit::Copy
     }
 }
 
 fn field_diffs(
     fields: &syn::Fields
 ) -> Output {
-    let field_diffs = fields.iter().enumerate().map(field_diff);
+    let field_diffs = fields.iter()
+        .enumerate()
+        .map(|(index, field)| {
+            let field_name = match field {
+                syn::Field { ident: Some(ident), .. } => quote! { #ident },
+                syn::Field { ident: None, .. } => {
+                    let ident = unnamed_field_name(index);
+
+                    quote! { #ident }
+                }
+            };
+
+            quote! {
+                self.#field_name.diff(&other.#field_name)
+            }
+        });
 
     quote! { #(#field_diffs),* }
 }
@@ -279,11 +258,11 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 impl<'a> diffus::Diffable<'a> for #ident {
                     type D = diffus::edit::enm::Edit<'a, Self, #edited_ident<'a>>;
 
-                    fn diff(&'a self, other: &'a Self) -> diffus::Edit<'a, Self> {
+                    fn diff(&'a self, other: &'a Self) -> diffus::edit::Edit<'a, Self> {
                         match (self, other) {
                             #(#variants_matches,)*
                             (self_variant, other_variant) => diffus::edit::Edit::Change(diffus::edit::enm::Edit::VariantChanged(
-                                (self_variant, other_variant)
+                                self_variant, other_variant
                             )),
                         }
                     }
@@ -310,10 +289,10 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         impl<'a> diffus::Diffable<'a> for #ident {
                             type D = #edited_ident<'a>;
 
-                            fn diff(&'a self, other: &'a Self) -> diffus::Edit<'a, Self> {
+                            fn diff(&'a self, other: &'a Self) -> diffus::edit::Edit<'a, Self> {
                                 match ( #field_diffs ) {
                                     #matches_all_copy,
-                                    ( #field_idents ) => diffus::Edit::Change(
+                                    ( #field_idents ) => diffus::edit::Edit::Change(
                                         #edited_ident { #field_idents }
                                     )
                                 }
@@ -328,10 +307,10 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         impl<'a> diffus::Diffable<'a> for #ident {
                             type D = #edited_ident<'a>;
 
-                            fn diff(&'a self, other: &'a Self) -> diffus::Edit<'a, Self> {
+                            fn diff(&'a self, other: &'a Self) -> diffus::edit::Edit<'a, Self> {
                                 match ( #field_diffs ) {
                                     #matches_all_copy,
-                                    ( #field_idents ) => diffus::Edit::Change(
+                                    ( #field_idents ) => diffus::edit::Edit::Change(
                                         #edited_ident ( #field_idents )
                                     )
                                 }
@@ -347,14 +326,14 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         impl<'a> diffus::Diffable<'a> for #ident {
                             type D = #edited_ident;
 
-                            fn diff(&'a self, other: &'a Self) -> diffus::Edit<'a, Self> {
-                                diffus::Edit::Copy
+                            fn diff(&'a self, other: &'a Self) -> diffus::edit::Edit<'a, Self> {
+                                diffus::edit::Edit::Copy
                             }
                         }
                     })
                 }
             }
         },
-        _ => unreachable!(),
+        syn::Data::Union(_) => panic!("union type not supported"),
     }
 }
