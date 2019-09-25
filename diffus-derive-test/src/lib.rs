@@ -25,6 +25,30 @@ mod test {
         Cd { x: u32, y: String },
     }
 
+    mod visibility_test {
+        /*
+         * To verify that the visibility of the Edited version of the object
+         * is inherited correctly and doesn't cause problems.
+         */
+        use diffus_derive::Diffus;
+
+        #[derive(Diffus)]
+        pub struct VisTestStructUnit;
+
+        #[derive(Diffus)]
+        pub struct VisTestStructTuple(u32);
+
+        #[derive(Diffus)]
+        pub struct VisTestStruct { x: u32 }
+
+        #[derive(Diffus)]
+        pub enum VisTestEnum {
+            A,
+            B(u32),
+            C { x: u32 },
+        }
+    }
+
     #[test]
     fn enm_nested_test() {
         let left = NestedTest::T {
