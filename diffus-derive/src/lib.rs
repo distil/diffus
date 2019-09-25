@@ -7,8 +7,6 @@ use quote::{
 
 type Output = proc_macro2::TokenStream;
 
-// FIXME visibility of generated structs/fields etc
-
 // FIXME verify support for field name `other` et al. ex. struct A { other: u32 }
 // havoc
 // I think its okey now but setup regression test
@@ -145,6 +143,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
     let input: syn::DeriveInput = syn::parse2(proc_macro2::TokenStream::from(input)).unwrap();
 
     let ident = &input.ident;
+    let vis = &input.vis;
     let edited_ident = syn::parse_str::<syn::Path>(&format!("Edited{}", ident)).unwrap();
 
     match input.data {
@@ -199,7 +198,6 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         let self_field_idents = renamed_field_idents(&fields, "self_");
                         let other_field_idents = renamed_field_idents(&fields, "other_");
 
-
                         quote! {
                             (
                                 #ident::#variant_ident { #self_field_idents },
@@ -251,7 +249,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             });
 
             proc_macro::TokenStream::from(quote! {
-                enum #edited_ident<'a> {
+                #vis enum #edited_ident<'a> {
                     #(#edit_variants),*
                 }
 
@@ -282,7 +280,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             match fields {
                 syn::Fields::Named(_) => {
                     proc_macro::TokenStream::from(quote! {
-                        struct #edited_ident<'a> {
+                        #vis struct #edited_ident<'a> {
                             #edit_fields
                         }
 
@@ -302,7 +300,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 },
                 syn::Fields::Unnamed(_) => {
                     proc_macro::TokenStream::from(quote! {
-                        struct #edited_ident<'a> ( #edit_fields );
+                        #vis struct #edited_ident<'a> ( #edit_fields );
 
                         impl<'a> diffus::Diffable<'a> for #ident {
                             type D = #edited_ident<'a>;
@@ -321,7 +319,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 },
                 syn::Fields::Unit => {
                     proc_macro::TokenStream::from(quote! {
-                        struct #edited_ident;
+                        #vis struct #edited_ident;
 
                         impl<'a> diffus::Diffable<'a> for #ident {
                             type D = #edited_ident;
