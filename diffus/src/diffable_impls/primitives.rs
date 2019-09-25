@@ -18,7 +18,7 @@ macro_rules! primitive_impl {
     }
 }
 
-primitive_impl! { i64, i32, i16, i8, u64, u32, u16, u8, char }
+primitive_impl! { i64, i32, i16, i8, u64, u32, u16, u8, char, bool, isize, usize }
 
 #[cfg(feature = "uuid-impl")]
 primitive_impl! { uuid::Uuid }
