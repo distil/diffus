@@ -14,9 +14,9 @@ macro_rules! map_impl {
                         .iter()
                         .filter_map(|(k, v)| Some((k, (v, other.get(k)?))));
 
-                    let unique_self = self.iter().filter(|(k, _)| !other.contains_key(k));
+                    let unique_self = self.iter().filter(|(k, _)| !other.contains_key(*k));
 
-                    let unique_other = other.iter().filter(|(k, _)| !self.contains_key(k));
+                    let unique_other = other.iter().filter(|(k, _)| !self.contains_key(*k));
 
                     let value_diffs = unique_other
                         .map(|(k, v)| (k, map::Edit::Insert(v)))
