@@ -7,19 +7,6 @@ use quote::{
 
 type Output = proc_macro2::TokenStream;
 
-// FIXME verify support for field name `other` et al. ex. struct A { other: u32 }
-// havoc
-// I think its okey now but setup regression test
-
-// FIXME namespacing or something to avoid collisions in what is generated
-//
-// FIXME organize all the small helpers edit_field et al
-//
-// FIXME possible to avoid EditedX to pollute namespace, have it associated? X::Edited is that
-// possible?
-//
-// FIXME think about how we want to organize the namespacing of all things ex.
-// enm::Edit::VariantChange
 
 fn edit_fields(
     fields: &syn::Fields,
