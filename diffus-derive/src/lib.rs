@@ -163,17 +163,10 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             });
 
             let has_non_unit_variant = variants.iter().any(|syn::Variant { fields, .. }| {
-                match fields {
-                    syn::Fields::Unit => false,
-                    _ => true,
-                }
+                if let syn::Fields::Unit = fields { false } else { true }
             });
 
-            let lifetime = if has_non_unit_variant {
-                quote! { <'a> }
-            } else {
-                quote! {}
-            };
+            let lifetime = if has_non_unit_variant { Some(quote! { <'a> }) } else { None };
 
             let variants_matches = variants.iter().map(|syn::Variant { ident: variant_ident, fields, .. }| {
 
@@ -248,12 +241,12 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             });
 
             let result = quote! {
-                #vis enum #edited_ident#lifetime {
+                #vis enum #edited_ident #lifetime {
                     #(#edit_variants),*
                 }
 
                 impl<'a> diffus::Diffable<'a> for #ident {
-                    type D = diffus::edit::enm::Edit<'a, Self, #edited_ident#lifetime>;
+                    type D = diffus::edit::enm::Edit<'a, Self, #edited_ident #lifetime>;
 
                     fn diff(&'a self, other: &'a Self) -> diffus::edit::Edit<'a, Self> {
                         match (self, other) {
