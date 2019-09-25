@@ -26,6 +26,15 @@ mod test {
     }
 
     /*
+     * Verify enum refering to own type via hashmap 
+     */
+    #[derive(Diffus)]
+    enum RecursiveHashMap {
+        Node(std::collections::HashMap<u32, RecursiveHashMap>),
+        Empty,
+    }
+
+    /*
      * Verify enums with only Unit variants.
      */
     #[derive(Diffus)]
