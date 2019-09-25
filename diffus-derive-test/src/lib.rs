@@ -25,10 +25,18 @@ mod test {
         Cd { x: u32, y: String },
     }
 
+    /*
+     * Verify enums with only Unit variants.
+     */
+    #[derive(Diffus)]
+    enum EnumNoLifetimeParameter {
+        A,
+        B,
+    }
+
     mod visibility_test {
         /*
-         * To verify that the visibility of the Edited version of the object
-         * is inherited correctly and doesn't cause problems.
+         * Verify that the visibility of the Edited version is inherited.
          */
         use diffus_derive::Diffus;
 
