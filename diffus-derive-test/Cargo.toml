@@ -6,9 +6,5 @@ edition = "2018"
 
 
 [dependencies]
-
-[dependencies.diffus]
-path = "../diffus"
-
-[dependencies.diffus-derive]
-path = "../diffus-derive"
+diffus = { path = "../diffus" }
+diffus-derive = { path = "../diffus-derive" }

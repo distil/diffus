@@ -6,15 +6,9 @@ edition = "2018"
 
 
 [dependencies]
+indexmap = { version = "1", optional = true }
 itertools = "0.8"
-
-[dependencies.indexmap]
-version = "1"
-optional = true
-
-[dependencies.uuid]
-version = "0.7"
-optional = true
+uuid = { version = "0.7", optional = true }
 
 [features]
 default = []

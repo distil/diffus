@@ -1,4 +1,4 @@
-use crate::{edit::collection, edit::Edit, lcs::Lcs, Diffable};
+use crate::{edit::{collection, Edit}, lcs::Lcs, Diffable};
 
 impl<'a> Diffable<'a> for String {
     type D = std::collections::vec_deque::IntoIter<collection::Edit<char>>;

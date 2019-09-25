@@ -1,4 +1,4 @@
-use crate::{edit::collection, edit::Edit, lcs::Lcs, Diffable};
+use crate::{edit::{collection, Edit}, lcs::Lcs, Diffable};
 
 macro_rules! collection_impl {
     ($($typ:ident),*) => {

@@ -1,5 +1,5 @@
 pub mod diffable_impls;
-mod edit;
+pub mod edit;
 mod lcs;
 
 pub trait Diffable<'a>: Sized {
