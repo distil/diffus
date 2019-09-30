@@ -2,8 +2,9 @@ use crate::{edit::{collection, Edit}, lcs::Lcs, Diffable};
 
 impl<'a> Diffable<'a> for String {
     type D = std::collections::vec_deque::IntoIter<collection::Edit<char>>;
+    type Target = Self;
 
-    fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
+    fn diff(&'a self, other: &'a Self) -> Edit<'a, Self::Target> {
         let (s, modified) = Lcs::new(
             self.chars(),
             || other.chars(),

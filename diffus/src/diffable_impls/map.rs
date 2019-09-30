@@ -8,8 +8,9 @@ macro_rules! map_impl {
         $(
             impl<'a, K: Eq + $key_constraint + 'a, V: Diffable<'a> + 'a> Diffable<'a> for $typ<K, V> {
                 type D = $typ<&'a K, map::Edit<'a, V>>;
+                type Target = Self;
 
-                fn diff(&'a self, other: &'a Self) -> Edit<Self> {
+                fn diff(&'a self, other: &'a Self) -> Edit<Self::Target> {
                     let intersection = self
                         .iter()
                         .filter_map(|(k, v)| Some((k, (v, other.get(k)?))));

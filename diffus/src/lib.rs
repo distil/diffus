@@ -5,8 +5,9 @@ mod lcs;
 
 pub trait Diffable<'a>: Sized {
     type D: Sized + 'a;
+    type Target: Diffable<'a> + 'a;
 
-    fn diff(&'a self, other: &'a Self) -> edit::Edit<'a, Self>;
+    fn diff(&'a self, other: &'a Self) -> edit::Edit<'a, Self::Target>;
 }
 
 pub trait Same {

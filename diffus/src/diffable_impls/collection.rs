@@ -8,8 +8,9 @@ macro_rules! collection_impl {
         $(
             impl<'a, T: Same + 'a> Diffable<'a> for $typ<T> {
                 type D = std::collections::vec_deque::IntoIter<collection::Edit<&'a T>>;
+                type Target = Self;
 
-                fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
+                fn diff(&'a self, other: &'a Self) -> Edit<'a, Self::Target> {
                     let (s, modified) = Lcs::new(
                         self.iter(),
                         || other.iter(),
@@ -39,8 +40,9 @@ macro_rules! set_impl {
         $(
             impl<'a, T: Same + $key_constraint + 'a> Diffable<'a> for $typ<T> {
                 type D = std::collections::vec_deque::IntoIter<collection::Edit<&'a T>>;
+                type Target = Self;
 
-                fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
+                fn diff(&'a self, other: &'a Self) -> Edit<'a, Self::Target> {
                     let (s, modified) = Lcs::new(
                         self.iter(),
                         || other.iter(),

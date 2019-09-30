@@ -22,7 +22,6 @@ impl<'a, T: Same + Diffable<'a>> Lcs<T> {
 
         let mut storage = vec![0; width * height];
 
-        // TODO itertools::iproduct!
         for (i, x) in x.enumerate() {
             for (j, y) in y().enumerate() {
                 storage[(i + 1) * width + (j + 1)] = if x.same(&y) {
