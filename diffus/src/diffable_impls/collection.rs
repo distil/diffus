@@ -1,9 +1,12 @@
-use crate::{edit::{collection, Edit}, lcs::Lcs, Diffable};
+use crate::{
+    edit::{collection, Edit}, lcs::Lcs, Diffable,
+    Same,
+};
 
 macro_rules! collection_impl {
     ($($typ:ident),*) => {
         $(
-            impl<'a, T: Eq + 'a> Diffable<'a> for $typ<T> {
+            impl<'a, T: Same + 'a> Diffable<'a> for $typ<T> {
                 type D = std::collections::vec_deque::IntoIter<collection::Edit<&'a T>>;
 
                 fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
@@ -13,7 +16,7 @@ macro_rules! collection_impl {
                         self.len(),
                         other.len(),
                     )
-                    .diff(self.iter(), other.iter());
+                        .diff(self.iter(), other.iter());
 
                     if modified {
                         Edit::Change(s)
@@ -34,7 +37,7 @@ collection_impl! {
 macro_rules! set_impl {
     ($(($typ:ident, $key_constraint:ident)),*) => {
         $(
-            impl<'a, T: Eq + $key_constraint + 'a> Diffable<'a> for $typ<T> {
+            impl<'a, T: Same + $key_constraint + 'a> Diffable<'a> for $typ<T> {
                 type D = std::collections::vec_deque::IntoIter<collection::Edit<&'a T>>;
 
                 fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {

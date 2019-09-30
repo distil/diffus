@@ -1,11 +1,14 @@
-#[derive(PartialEq, Eq, Debug)]
-pub enum Edit<T: Eq> {
-    Copy(T),
+use crate::Same;
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Edit<T> {
+    Copy(T), // FIXME Copy?
+    Change(T), // FIXME Change(T,T), &?
     Insert(T),
     Remove(T),
 }
 
-impl<T: Eq> Edit<T> {
+impl<T: Same> Edit<T> {
     pub fn is_copy(&self) -> bool {
         if let Self::Copy(_) = self {
             true

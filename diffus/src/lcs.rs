@@ -1,13 +1,16 @@
 use super::edit::collection::Edit;
 
-pub(crate) struct Lcs<T: Eq> {
+use crate::Same;
+use crate::Diffable;
+
+pub(crate) struct Lcs<T: Same> {
     storage: Vec<usize>,
     width: usize,
     height: usize,
     marker: std::marker::PhantomData<T>,
 }
 
-impl<T: Eq> Lcs<T> {
+impl<'a, T: Same + Diffable<'a>> Lcs<T> {
     pub(crate) fn new<I: Iterator<Item = T>>(
         x: impl Iterator<Item = T>,
         y: impl Fn() -> I,
@@ -19,9 +22,10 @@ impl<T: Eq> Lcs<T> {
 
         let mut storage = vec![0; width * height];
 
+        // TODO itertools::iproduct!
         for (i, x) in x.enumerate() {
             for (j, y) in y().enumerate() {
-                storage[(i + 1) * width + (j + 1)] = if x == y {
+                storage[(i + 1) * width + (j + 1)] = if x.same(&y) {
                     storage[i * width + j] + 1
                 } else {
                     storage[(i + 1) * width + j].max(storage[i * width + (j + 1)])
@@ -37,7 +41,7 @@ impl<T: Eq> Lcs<T> {
         }
     }
 
-    fn diff_impl<'a>(
+    fn diff_impl(
         &self,
         mut x: itertools::PutBack<impl Iterator<Item = T>>,
         mut y: itertools::PutBack<impl Iterator<Item = T>>,
@@ -58,18 +62,34 @@ impl<T: Eq> Lcs<T> {
                 .checked_sub(1)
                 .map(|i_minus| self.storage[i_minus * self.width + j]);
 
-            if current_x.is_some() && current_y.is_some() && current_x == current_y {
+            if current_x.is_some() && current_y.is_some() && current_x.same(&current_y) {
                 i = i - 1;
                 j = j - 1;
-                current_x.map(|value| (Edit::Copy(value), false))
+
+                match (current_x, current_y) {
+                    (Some(current_x), Some(current_y)) => {
+                        match current_x.diff(&current_y) {
+                            crate::edit::Edit::Copy => Some((Edit::Copy(current_x), false)),
+                            crate::edit::Edit::Change(diff) => Some((Edit::Change(diff), true)),
+                        }
+                    }
+                    _ => unreachable!()
+                }
+
             } else if current_y.is_some() && (current_x.is_none() || left >= above) {
                 current_x.map(|c| x.put_back(c));
                 j = j - 1;
-                current_y.map(|value| (Edit::Insert(value), true))
+                current_y.map(|value| {
+                    (Edit::Insert(value), true)
+                })
+
             } else if current_x.is_some() && (current_y.is_none() || left < above) {
                 current_y.map(|c| y.put_back(c));
                 i = i - 1;
-                current_x.map(|value| (Edit::Remove(value), true))
+                current_x.map(|value| {
+                    (Edit::Remove(value), true)
+                })
+
             } else {
                 None
             }
@@ -88,7 +108,7 @@ impl<T: Eq> Lcs<T> {
     }
 
     /// Returns the iterator of changes along with a bool indicating if there were any `Insert`/ `Remove`.
-    pub(crate) fn diff<'a>(
+    pub(crate) fn diff(
         &self,
         x: impl DoubleEndedIterator<Item = T> + 'a,
         y: impl DoubleEndedIterator<Item = T> + 'a,
@@ -107,7 +127,7 @@ impl<T: Eq> Lcs<T> {
     /// Same as above but for iterators that don't implement `DoubleEndedIterator`.
     /// This means we'll iterate backwards. But collections like `HashSet` doesn't have
     /// a concept of direction anyway.
-    pub(crate) fn diff_unordered<'a>(
+    pub(crate) fn diff_unordered(
         &self,
         x: impl Iterator<Item = T> + 'a,
         y: impl Iterator<Item = T> + 'a,
@@ -126,12 +146,14 @@ impl<T: Eq> Lcs<T> {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn characters() {
         let left = "XMJYAUZ";
         let right = "MZJAWXU";
 
-        let (s, modified) = super::Lcs::new(
+        let (s, modified) = Lcs::new(
             left.chars(),
             || right.chars(),
             left.chars().count(),
@@ -139,7 +161,7 @@ mod tests {
         )
         .diff(left.chars(), right.chars());
         assert!(modified);
-        use super::Edit::*;
+        use Edit::*;
         assert_eq!(
             s.collect::<Vec<_>>(),
             vec![
@@ -162,7 +184,7 @@ mod tests {
         let left = "The quick brown fox jumps over the lazy dog";
         let right = "The quick brown dog leaps over the lazy cat";
 
-        let (s, modified) = super::Lcs::new(
+        let (s, modified) = Lcs::new(
             left.split_whitespace(),
             || right.split_whitespace(),
             left.split_whitespace().count(),
@@ -170,7 +192,7 @@ mod tests {
         )
         .diff(left.split_whitespace(), right.split_whitespace());
         assert!(modified);
-        use super::Edit::*;
+        use Edit::*;
         assert_eq!(
             s.collect::<Vec<_>>(),
             vec![
