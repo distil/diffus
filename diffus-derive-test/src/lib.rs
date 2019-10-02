@@ -11,6 +11,54 @@ mod test {
         Diffable,
     };
 
+    #[derive(Diffus, Debug, PartialEq)]
+    struct Pair {
+        id: u32,
+        value: u32,
+    }
+
+    impl diffus::Same for Pair {
+        fn same(&self, other: &Self) -> bool {
+            self.id == other.id
+        }
+    }
+
+    #[test]
+    fn non_trivial_same_collection() {
+        let left = vec![
+            Pair { id: 1, value: 0 },
+            Pair { id: 2, value: 0 },
+            Pair { id: 3, value: 0 },
+            Pair { id: 4, value: 0 },
+            Pair { id: 5, value: 0 },
+            Pair { id: 6, value: 0 },
+            Pair { id: 7, value: 0 },
+            Pair { id: 8, value: 0 },
+        ];
+        let right = vec![
+            Pair { id: 1, value: 0 },
+            Pair { id: 2, value: 1 },
+            Pair { id: 4, value: 0 },
+            Pair { id: 5, value: 0 },
+            Pair { id: 6, value: 0 },
+            Pair { id: 8, value: 0 },
+            Pair { id: 7, value: 0 },
+        ];
+
+        let diff = left.diff(&right);
+
+        if let diffus::edit::Edit::Change(diff) = diff {
+            assert_eq!(
+                diff.collect::<Vec<_>>(),
+                vec![
+                ]
+            );
+        } else {
+            unreachable!()
+        }
+    }
+
+
     #[derive(Diffus)]
     enum NestedTest {
         T { test: Test },
@@ -91,7 +139,6 @@ mod test {
         }
     }
 
-
     #[test]
     fn enm_associated_not_change_tuple_variant() {
         let left = Test::Bd(
@@ -153,19 +200,19 @@ mod test {
         }
     }
 
-    #[derive(Diffus, Debug)]
+    #[derive(Diffus, Debug, PartialEq)]
     struct Inner {
         x: String,
         y: u32,
     }
 
-    #[derive(Diffus)]
+    #[derive(Diffus, Debug, PartialEq)]
     struct Unit;
 
-    #[derive(Diffus, Debug)]
+    #[derive(Diffus, Debug, PartialEq)]
     struct Unnamed(u32, String);
 
-    #[derive(Diffus, Debug)]
+    #[derive(Diffus, Debug, PartialEq)]
     struct Outer {
         inner: Inner,
         lit: i32,

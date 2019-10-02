@@ -1,5 +1,6 @@
 use super::super::Diffable;
 
+#[derive(Debug, PartialEq)]
 pub enum Edit<'a, T: Diffable<'a> + ?Sized> {
     Insert(&'a T),
     Remove,

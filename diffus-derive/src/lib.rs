@@ -133,7 +133,9 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
     let vis = &input.vis;
     let edited_ident = syn::parse_str::<syn::Path>(&format!("Edited{}", ident)).unwrap();
 
-    match input.data {
+    let edited_derive = "";
+
+    let result = match input.data {
         syn::Data::Enum(syn::DataEnum {
             variants,
             ..
@@ -241,6 +243,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             });
 
             let result = quote! {
+                #[derive(Debug, PartialEq)]
                 #vis enum #edited_ident #lifetime {
                     #(#edit_variants),*
                 }
@@ -275,6 +278,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             match fields {
                 syn::Fields::Named(_) => {
                     proc_macro::TokenStream::from(quote! {
+                        #[derive(Debug, PartialEq)]
                         #vis struct #edited_ident<'a> {
                             #edit_fields
                         }
@@ -296,6 +300,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 },
                 syn::Fields::Unnamed(_) => {
                     proc_macro::TokenStream::from(quote! {
+                        #[derive(Debug, PartialEq)]
                         #vis struct #edited_ident<'a> ( #edit_fields );
 
                         impl<'a> diffus::Diffable<'a> for #ident {
@@ -316,6 +321,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 },
                 syn::Fields::Unit => {
                     proc_macro::TokenStream::from(quote! {
+                        #[derive(Debug, PartialEq)]
                         #vis struct #edited_ident;
 
                         impl<'a> diffus::Diffable<'a> for #ident {
@@ -330,6 +336,10 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             }
         },
-        syn::Data::Union(_) => panic!("union type not supported"),
-    }
+        syn::Data::Union(_) => panic!("union type not supported yet"),
+    };
+
+    println!("{}", result);
+
+    return result;
 }

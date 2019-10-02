@@ -2,6 +2,7 @@ pub mod collection;
 pub mod map;
 pub mod enm;
 
+#[derive(Debug, PartialEq)]
 pub enum Edit<'a, T: crate::Diffable<'a> + ?Sized> {
     Copy,
     Change(T::D),
