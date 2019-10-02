@@ -6,8 +6,8 @@ use crate::{
 macro_rules! collection_impl {
     ($($typ:ident),*) => {
         $(
-            impl<'a, T: Same + 'a> Diffable<'a> for $typ<T> {
-                type D = std::collections::vec_deque::IntoIter<collection::Edit<&'a T>>;
+            impl<'a, T: Same + Diffable<'a> + 'a> Diffable<'a> for $typ<T> {
+                type D = std::collections::vec_deque::IntoIter<collection::Edit<&'a T, <<T as Diffable<'a>>::Target as Diffable<'a>>::D>>;
                 type Target = Self;
 
                 fn diff(&'a self, other: &'a Self) -> Edit<'a, Self::Target> {
@@ -38,8 +38,8 @@ collection_impl! {
 macro_rules! set_impl {
     ($(($typ:ident, $key_constraint:ident)),*) => {
         $(
-            impl<'a, T: Same + $key_constraint + 'a> Diffable<'a> for $typ<T> {
-                type D = std::collections::vec_deque::IntoIter<collection::Edit<&'a T>>;
+            impl<'a, T: Same + Diffable<'a> + $key_constraint + 'a> Diffable<'a> for $typ<T> {
+                type D = std::collections::vec_deque::IntoIter<collection::Edit<&'a T, <<T as Diffable<'a>>::Target as Diffable<'a>>::D>>;
                 type Target = Self;
 
                 fn diff(&'a self, other: &'a Self) -> Edit<'a, Self::Target> {

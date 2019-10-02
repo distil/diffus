@@ -6,7 +6,7 @@ use crate::{
 macro_rules! map_impl {
     ($(($typ:ident, $key_constraint:ident)),*) => {
         $(
-            impl<'a, K: Eq + $key_constraint + 'a, V: Diffable<'a> + 'a> Diffable<'a> for $typ<K, V> {
+            impl<'a, K: Eq + $key_constraint + 'a, V: Diffable<'a, Target = V> + 'a> Diffable<'a> for $typ<K, V> {
                 type D = $typ<&'a K, map::Edit<'a, V>>;
                 type Target = Self;
 

@@ -1,7 +1,7 @@
 use crate::{edit::{enm, Edit}, Diffable};
 
 impl<'a, T: Diffable<'a> + 'a> Diffable<'a> for Option<T> {
-    type D = enm::Edit<'a, Self, T::D>;
+    type D = enm::Edit<'a, Self, <<T as Diffable<'a>>::Target as Diffable<'a>>::D>;
     type Target = Self;
 
     fn diff(&'a self, other: &'a Self) -> Edit<'a, Self::Target> {

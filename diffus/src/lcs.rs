@@ -3,16 +3,16 @@ use super::edit::collection::Edit;
 use crate::Same;
 use crate::Diffable;
 
-pub(crate) struct Lcs<T: Same> {
+pub(crate) struct Lcs<T: Same + ?Sized> {
     storage: Vec<usize>,
     width: usize,
     height: usize,
     marker: std::marker::PhantomData<T>,
 }
 
-impl<'a, T: Same + Diffable<'a>> Lcs<T> {
-    pub(crate) fn new<I: Iterator<Item = T>>(
-        x: impl Iterator<Item = T>,
+impl<'a, T: Same + Diffable<'a> + ?Sized + 'a> Lcs<T> {
+    pub(crate) fn new<I: Iterator<Item = &'a T>>(
+        x: impl Iterator<Item = &'a T>,
         y: impl Fn() -> I,
         x_len: usize,
         y_len: usize,
@@ -42,11 +42,11 @@ impl<'a, T: Same + Diffable<'a>> Lcs<T> {
 
     fn diff_impl(
         &self,
-        mut x: itertools::PutBack<impl Iterator<Item = T>>,
-        mut y: itertools::PutBack<impl Iterator<Item = T>>,
+        mut x: itertools::PutBack<impl Iterator<Item = &'a T>>,
+        mut y: itertools::PutBack<impl Iterator<Item = &'a T>>,
         mut i: usize,
         mut j: usize,
-    ) -> (std::collections::vec_deque::IntoIter<Edit<T>>, bool)
+    ) -> (std::collections::vec_deque::IntoIter<Edit<&'a T, <<T as Diffable<'a>>::Target as Diffable<'a>>::D>>, bool)
     where
         T: 'a,
     {
@@ -61,7 +61,7 @@ impl<'a, T: Same + Diffable<'a>> Lcs<T> {
                 .checked_sub(1)
                 .map(|i_minus| self.storage[i_minus * self.width + j]);
 
-            if current_x.is_some() && current_y.is_some() && current_x.same(&current_y) {
+            if current_x.is_some() && current_y.is_some() && current_x.as_ref().unwrap().same(current_y.as_ref().unwrap()) {
                 i = i - 1;
                 j = j - 1;
 
@@ -109,9 +109,9 @@ impl<'a, T: Same + Diffable<'a>> Lcs<T> {
     /// Returns the iterator of changes along with a bool indicating if there were any `Insert`/ `Remove`.
     pub(crate) fn diff(
         &self,
-        x: impl DoubleEndedIterator<Item = T> + 'a,
-        y: impl DoubleEndedIterator<Item = T> + 'a,
-    ) -> (std::collections::vec_deque::IntoIter<Edit<T>>, bool)
+        x: impl DoubleEndedIterator<Item = &'a T> + 'a,
+        y: impl DoubleEndedIterator<Item = &'a T> + 'a,
+    ) -> (std::collections::vec_deque::IntoIter<Edit<&'a T, <<T as Diffable<'a>>::Target as Diffable<'a>>::D>>, bool)
     where
         T: 'a,
     {
@@ -128,9 +128,9 @@ impl<'a, T: Same + Diffable<'a>> Lcs<T> {
     /// a concept of direction anyway.
     pub(crate) fn diff_unordered(
         &self,
-        x: impl Iterator<Item = T> + 'a,
-        y: impl Iterator<Item = T> + 'a,
-    ) -> (std::collections::vec_deque::IntoIter<Edit<T>>, bool)
+        x: impl Iterator<Item = &'a T> + 'a,
+        y: impl Iterator<Item = &'a T> + 'a,
+    ) -> (std::collections::vec_deque::IntoIter<Edit<&'a T, <<T as Diffable<'a>>::Target as Diffable<'a>>::D>>, bool)
         where
             T: 'a,
     {
@@ -151,29 +151,31 @@ mod tests {
     fn characters() {
         let left = "XMJYAUZ";
         let right = "MZJAWXU";
+        let left_chars = left.chars().collect::<Vec<_>>();
+        let right_chars = right.chars().collect::<Vec<_>>();
 
         let (s, modified) = Lcs::new(
-            left.chars(),
-            || right.chars(),
-            left.chars().count(),
-            right.chars().count(),
+            left_chars.iter(),
+            || right_chars.iter(),
+            left_chars.len(),
+            right_chars.len(),
         )
-        .diff(left.chars(), right.chars());
+        .diff(left_chars.iter(), right_chars.iter());
         assert!(modified);
         use Edit::*;
         assert_eq!(
             s.collect::<Vec<_>>(),
             vec![
-                Remove('X'),
-                Copy('M'),
-                Insert('Z'),
-                Copy('J'),
-                Remove('Y'),
-                Copy('A'),
-                Insert('W'),
-                Insert('X'),
-                Copy('U'),
-                Remove('Z')
+                Remove(&'X'),
+                Copy(&'M'),
+                Insert(&'Z'),
+                Copy(&'J'),
+                Remove(&'Y'),
+                Copy(&'A'),
+                Insert(&'W'),
+                Insert(&'X'),
+                Copy(&'U'),
+                Remove(&'Z')
             ]
         );
     }
@@ -189,7 +191,7 @@ mod tests {
             left.split_whitespace().count(),
             right.split_whitespace().count(),
         )
-        .diff(left.split_whitespace(), right.split_whitespace());
+            .diff(left.split_whitespace(), right.split_whitespace());
         assert!(modified);
         use Edit::*;
         assert_eq!(

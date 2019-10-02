@@ -15,10 +15,10 @@ fn edit_fields(
         .map(|field| {
             match field {
                 syn::Field { ident: Some(ident), ty, .. } => quote! {
-                    #ident: diffus::edit::Edit<'a, #ty>
+                    #ident: diffus::edit::Edit<'a, <#ty as diffus::Diffable<'a>>::Target>
                 },
                         syn::Field { ident: None, ty, .. } => quote! {
-                    diffus::edit::Edit<'a, #ty>
+                    diffus::edit::Edit<'a, <#ty as diffus::Diffable<'a>>::Target>
                 },
             }
         });
@@ -247,8 +247,9 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
                 impl<'a> diffus::Diffable<'a> for #ident {
                     type D = diffus::edit::enm::Edit<'a, Self, #edited_ident #lifetime>;
+                    type Target = Self;
 
-                    fn diff(&'a self, other: &'a Self) -> diffus::edit::Edit<'a, Self> {
+                    fn diff(&'a self, other: &'a Self) -> diffus::edit::Edit<'a, Self::Target> {
                         match (self, other) {
                             #(#variants_matches,)*
                             (self_variant, other_variant) => diffus::edit::Edit::Change(diffus::edit::enm::Edit::VariantChanged(
@@ -280,8 +281,9 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
                         impl<'a> diffus::Diffable<'a> for #ident {
                             type D = #edited_ident<'a>;
+                            type Target = Self;
 
-                            fn diff(&'a self, other: &'a Self) -> diffus::edit::Edit<'a, Self> {
+                            fn diff(&'a self, other: &'a Self) -> diffus::edit::Edit<'a, Self::Target> {
                                 match ( #field_diffs ) {
                                     #matches_all_copy,
                                     ( #field_idents ) => diffus::edit::Edit::Change(
@@ -298,8 +300,9 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
                         impl<'a> diffus::Diffable<'a> for #ident {
                             type D = #edited_ident<'a>;
+                            type Target = Self;
 
-                            fn diff(&'a self, other: &'a Self) -> diffus::edit::Edit<'a, Self> {
+                            fn diff(&'a self, other: &'a Self) -> diffus::edit::Edit<'a, Self::Target> {
                                 match ( #field_diffs ) {
                                     #matches_all_copy,
                                     ( #field_idents ) => diffus::edit::Edit::Change(
@@ -317,8 +320,9 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
                         impl<'a> diffus::Diffable<'a> for #ident {
                             type D = #edited_ident;
+                            type Target = Self;
 
-                            fn diff(&'a self, other: &'a Self) -> diffus::edit::Edit<'a, Self> {
+                            fn diff(&'a self, other: &'a Self) -> diffus::edit::Edit<'a, Self::Target> {
                                 diffus::edit::Edit::Copy
                             }
                         }

@@ -10,24 +10,19 @@ impl<T: Same> Same for Option<T> {
     }
 }
 
-// FIXME impl primitives
-impl Same for char {
-    fn same(&self, other: &Self) -> bool {
-        self == other
+macro_rules! same_for_eq {
+    ($($typ:ty),*) => {
+        $(
+            impl Same for $typ {
+                fn same(&self, other: &Self) -> bool {
+                    self == other
+                }
+            }
+        )*
     }
 }
 
-impl Same for u8 {
-    fn same(&self, other: &Self) -> bool {
-        self == other
-    }
-}
-
-impl Same for &str {
-    fn same(&self, other: &Self) -> bool {
-        self == other
-    }
-}
+same_for_eq! { u8, u16, u32, u64, i8, i16, i32, i64, char, str, String }
 
 impl<T: Same> Same for &T {
     fn same(&self, other: &Self) -> bool {

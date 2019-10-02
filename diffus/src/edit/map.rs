@@ -1,13 +1,13 @@
 use super::super::Diffable;
 
-pub enum Edit<'a, T: Diffable<'a>> {
+pub enum Edit<'a, T: Diffable<'a> + ?Sized> {
     Insert(&'a T),
     Remove,
     Copy,
     Change(T::D),
 }
 
-impl<'a, T: Diffable<'a>> Edit<'a, T> {
+impl<'a, T: Diffable<'a> + ?Sized> Edit<'a, T> {
     // FIXME run doctests default
     //
     // Checks if the edit is an insert.
