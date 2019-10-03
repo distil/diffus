@@ -9,9 +9,11 @@ edition = "2018"
 indexmap = { version = "1", optional = true }
 itertools = "0.8"
 uuid = { version = "0.7", optional = true }
+snake_case = { version = "0.2", optional = true }
 
 [features]
 default = []
 
 indexmap-impl = [ "indexmap" ]
 uuid-impl = [ "uuid" ]
+snake_case-impl = [ "snake_case" ]
