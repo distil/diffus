@@ -5,8 +5,9 @@ macro_rules! primitive_impl {
         $(
             impl<'a> Diffable<'a> for $typ {
                 type D = (&'a $typ, &'a $typ);
+                type Target = Self;
 
-                fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
+                fn diff(&'a self, other: &'a Self) -> Edit<'a, Self::Target> {
                     if self == other {
                         Edit::Copy
                     } else {

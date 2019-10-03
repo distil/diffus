@@ -11,6 +11,65 @@ mod test {
         Diffable,
     };
 
+    #[derive(Diffus, Debug, PartialEq)]
+    struct Identified {
+        id: u32,
+        value: u32,
+    }
+
+    impl diffus::Same for Identified {
+        fn same(&self, other: &Self) -> bool {
+            self.id == other.id
+        }
+    }
+
+    #[test]
+    fn non_trivial_same_collection() {
+        let left = vec![
+            Identified { id: 1, value: 0 },
+            Identified { id: 2, value: 0 },
+            Identified { id: 3, value: 0 },
+            Identified { id: 4, value: 0 },
+            Identified { id: 5, value: 0 },
+            Identified { id: 6, value: 0 },
+            Identified { id: 7, value: 0 },
+        ];
+        let right = vec![
+            Identified { id: 1, value: 0 },
+            Identified { id: 2, value: 1 },
+            Identified { id: 4, value: 0 },
+            Identified { id: 3, value: 0 },
+            Identified { id: 5, value: 0 },
+            Identified { id: 6, value: 0 },
+        ];
+
+        let diff = left.diff(&right);
+
+        use diffus::edit::collection;
+        use diffus::edit;
+
+        if let edit::Edit::Change(diff) = diff {
+            assert_eq!(
+                diff.collect::<Vec<_>>(),
+                vec![
+                    collection::Edit::Copy(&Identified { id: 1, value: 0 }),
+                    collection::Edit::Change(EditedIdentified {
+                        id: edit::Edit::Copy,
+                        value: edit::Edit::Change((&0, &1))
+                    }),
+                    collection::Edit::Remove(&Identified { id: 3, value: 0 }),
+                    collection::Edit::Copy(&Identified { id: 4, value: 0 }),
+                    collection::Edit::Insert(&Identified { id: 3, value: 0 }),
+                    collection::Edit::Copy(&Identified { id: 5, value: 0 }),
+                    collection::Edit::Copy(&Identified { id: 6, value: 0 }),
+                    collection::Edit::Remove(&Identified { id: 7, value: 0 }),
+                ]
+            );
+        } else {
+            unreachable!()
+        }
+    }
+
     #[derive(Diffus)]
     enum NestedTest {
         T { test: Test },
@@ -91,7 +150,6 @@ mod test {
         }
     }
 
-
     #[test]
     fn enm_associated_not_change_tuple_variant() {
         let left = Test::Bd(
@@ -153,19 +211,19 @@ mod test {
         }
     }
 
-    #[derive(Diffus, Debug)]
+    #[derive(Diffus, Debug, PartialEq)]
     struct Inner {
         x: String,
         y: u32,
     }
 
-    #[derive(Diffus)]
+    #[derive(Diffus, Debug, PartialEq)]
     struct Unit;
 
-    #[derive(Diffus, Debug)]
+    #[derive(Diffus, Debug, PartialEq)]
     struct Unnamed(u32, String);
 
-    #[derive(Diffus, Debug)]
+    #[derive(Diffus, Debug, PartialEq)]
     struct Outer {
         inner: Inner,
         lit: i32,

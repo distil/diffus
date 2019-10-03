@@ -1,19 +1,23 @@
-use crate::{edit::{collection, Edit}, lcs::Lcs, Diffable};
+use crate::{
+    edit::{collection, Edit}, lcs::Lcs, Diffable,
+    Same,
+};
 
 macro_rules! collection_impl {
     ($($typ:ident),*) => {
         $(
-            impl<'a, T: Eq + 'a> Diffable<'a> for $typ<T> {
-                type D = std::collections::vec_deque::IntoIter<collection::Edit<&'a T>>;
+            impl<'a, T: Same + Diffable<'a> + 'a> Diffable<'a> for $typ<T> {
+                type D = std::collections::vec_deque::IntoIter<collection::Edit<&'a T, <<T as Diffable<'a>>::Target as Diffable<'a>>::D>>;
+                type Target = Self;
 
-                fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
+                fn diff(&'a self, other: &'a Self) -> Edit<'a, Self::Target> {
                     let (s, modified) = Lcs::new(
                         self.iter(),
                         || other.iter(),
                         self.len(),
                         other.len(),
                     )
-                    .diff(self.iter(), other.iter());
+                        .diff(self.iter(), other.iter());
 
                     if modified {
                         Edit::Change(s)
@@ -34,10 +38,11 @@ collection_impl! {
 macro_rules! set_impl {
     ($(($typ:ident, $key_constraint:ident)),*) => {
         $(
-            impl<'a, T: Eq + $key_constraint + 'a> Diffable<'a> for $typ<T> {
-                type D = std::collections::vec_deque::IntoIter<collection::Edit<&'a T>>;
+            impl<'a, T: Same + Diffable<'a> + $key_constraint + 'a> Diffable<'a> for $typ<T> {
+                type D = std::collections::vec_deque::IntoIter<collection::Edit<&'a T, <<T as Diffable<'a>>::Target as Diffable<'a>>::D>>;
+                type Target = Self;
 
-                fn diff(&'a self, other: &'a Self) -> Edit<'a, Self> {
+                fn diff(&'a self, other: &'a Self) -> Edit<'a, Self::Target> {
                     let (s, modified) = Lcs::new(
                         self.iter(),
                         || other.iter(),

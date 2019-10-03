@@ -1,15 +1,18 @@
 use super::edit::collection::Edit;
 
-pub(crate) struct Lcs<T: Eq> {
+use crate::Same;
+use crate::Diffable;
+
+pub(crate) struct Lcs<T: Same + ?Sized> {
     storage: Vec<usize>,
     width: usize,
     height: usize,
     marker: std::marker::PhantomData<T>,
 }
 
-impl<T: Eq> Lcs<T> {
-    pub(crate) fn new<I: Iterator<Item = T>>(
-        x: impl Iterator<Item = T>,
+impl<'a, T: Same + Diffable<'a> + ?Sized + 'a> Lcs<T> {
+    pub(crate) fn new<I: Iterator<Item = &'a T>>(
+        x: impl Iterator<Item = &'a T>,
         y: impl Fn() -> I,
         x_len: usize,
         y_len: usize,
@@ -19,12 +22,18 @@ impl<T: Eq> Lcs<T> {
 
         let mut storage = vec![0; width * height];
 
+        let a = |i: usize, j: usize| {
+            let result = j * width + i;
+
+            result
+        };
+
         for (i, x) in x.enumerate() {
             for (j, y) in y().enumerate() {
-                storage[(i + 1) * width + (j + 1)] = if x == y {
-                    storage[i * width + j] + 1
+                storage[a(i + 1,j + 1)] = if x.same(&y) {
+                    storage[a(i, j)] + 1
                 } else {
-                    storage[(i + 1) * width + j].max(storage[i * width + (j + 1)])
+                    storage[a(i + 1, j)].max(storage[a(i, j + 1)])
                 };
             }
         }
@@ -37,39 +46,57 @@ impl<T: Eq> Lcs<T> {
         }
     }
 
-    fn diff_impl<'a>(
+    fn diff_impl(
         &self,
-        mut x: itertools::PutBack<impl Iterator<Item = T>>,
-        mut y: itertools::PutBack<impl Iterator<Item = T>>,
+        mut x: itertools::PutBack<impl Iterator<Item = &'a T>>,
+        mut y: itertools::PutBack<impl Iterator<Item = &'a T>>,
         mut i: usize,
         mut j: usize,
-    ) -> (std::collections::vec_deque::IntoIter<Edit<T>>, bool)
+    ) -> (std::collections::vec_deque::IntoIter<Edit<&'a T, <<T as Diffable<'a>>::Target as Diffable<'a>>::D>>, bool)
     where
         T: 'a,
     {
+        let a = |i, j| j * self.width + i;
+
         let (queue, modified) = std::iter::from_fn(move || {
             let current_x = x.next();
             let current_y = y.next();
 
             let left = j
                 .checked_sub(1)
-                .map(|j_minus| self.storage[i * self.width + j_minus]);
+                .map(|j_minus| self.storage[a(i, j_minus)]);
             let above = i
                 .checked_sub(1)
-                .map(|i_minus| self.storage[i_minus * self.width + j]);
+                .map(|i_minus| self.storage[a(i_minus, j)]);
 
-            if current_x.is_some() && current_y.is_some() && current_x == current_y {
+            if current_x.is_some() && current_y.is_some() && current_x.as_ref().unwrap().same(current_y.as_ref().unwrap()) {
                 i = i - 1;
                 j = j - 1;
-                current_x.map(|value| (Edit::Copy(value), false))
+
+                match (current_x, current_y) {
+                    (Some(current_x), Some(current_y)) => {
+                        match current_x.diff(&current_y) {
+                            crate::edit::Edit::Copy => Some((Edit::Copy(current_x), false)),
+                            crate::edit::Edit::Change(diff) => Some((Edit::Change(diff), true)),
+                        }
+                    }
+                    _ => unreachable!()
+                }
+
             } else if current_y.is_some() && (current_x.is_none() || left >= above) {
                 current_x.map(|c| x.put_back(c));
                 j = j - 1;
-                current_y.map(|value| (Edit::Insert(value), true))
+                current_y.map(|value| {
+                    (Edit::Insert(value), true)
+                })
+
             } else if current_x.is_some() && (current_y.is_none() || left < above) {
                 current_y.map(|c| y.put_back(c));
                 i = i - 1;
-                current_x.map(|value| (Edit::Remove(value), true))
+                current_x.map(|value| {
+                    (Edit::Remove(value), true)
+                })
+
             } else {
                 None
             }
@@ -88,11 +115,11 @@ impl<T: Eq> Lcs<T> {
     }
 
     /// Returns the iterator of changes along with a bool indicating if there were any `Insert`/ `Remove`.
-    pub(crate) fn diff<'a>(
+    pub(crate) fn diff(
         &self,
-        x: impl DoubleEndedIterator<Item = T> + 'a,
-        y: impl DoubleEndedIterator<Item = T> + 'a,
-    ) -> (std::collections::vec_deque::IntoIter<Edit<T>>, bool)
+        x: impl DoubleEndedIterator<Item = &'a T> + 'a,
+        y: impl DoubleEndedIterator<Item = &'a T> + 'a,
+    ) -> (std::collections::vec_deque::IntoIter<Edit<&'a T, <<T as Diffable<'a>>::Target as Diffable<'a>>::D>>, bool)
     where
         T: 'a,
     {
@@ -107,11 +134,11 @@ impl<T: Eq> Lcs<T> {
     /// Same as above but for iterators that don't implement `DoubleEndedIterator`.
     /// This means we'll iterate backwards. But collections like `HashSet` doesn't have
     /// a concept of direction anyway.
-    pub(crate) fn diff_unordered<'a>(
+    pub(crate) fn diff_unordered(
         &self,
-        x: impl Iterator<Item = T> + 'a,
-        y: impl Iterator<Item = T> + 'a,
-    ) -> (std::collections::vec_deque::IntoIter<Edit<T>>, bool)
+        x: impl Iterator<Item = &'a T> + 'a,
+        y: impl Iterator<Item = &'a T> + 'a,
+    ) -> (std::collections::vec_deque::IntoIter<Edit<&'a T, <<T as Diffable<'a>>::Target as Diffable<'a>>::D>>, bool)
         where
             T: 'a,
     {
@@ -126,33 +153,37 @@ impl<T: Eq> Lcs<T> {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn characters() {
         let left = "XMJYAUZ";
         let right = "MZJAWXU";
+        let left_chars = left.chars().collect::<Vec<_>>();
+        let right_chars = right.chars().collect::<Vec<_>>();
 
-        let (s, modified) = super::Lcs::new(
-            left.chars(),
-            || right.chars(),
-            left.chars().count(),
-            right.chars().count(),
+        let (s, modified) = Lcs::new(
+            left_chars.iter(),
+            || right_chars.iter(),
+            left_chars.len(),
+            right_chars.len(),
         )
-        .diff(left.chars(), right.chars());
+        .diff(left_chars.iter(), right_chars.iter());
         assert!(modified);
-        use super::Edit::*;
+        use Edit::*;
         assert_eq!(
             s.collect::<Vec<_>>(),
             vec![
-                Remove('X'),
-                Copy('M'),
-                Insert('Z'),
-                Copy('J'),
-                Remove('Y'),
-                Copy('A'),
-                Insert('W'),
-                Insert('X'),
-                Copy('U'),
-                Remove('Z')
+                Remove(&'X'),
+                Copy(&'M'),
+                Insert(&'Z'),
+                Copy(&'J'),
+                Remove(&'Y'),
+                Copy(&'A'),
+                Insert(&'W'),
+                Insert(&'X'),
+                Copy(&'U'),
+                Remove(&'Z')
             ]
         );
     }
@@ -162,15 +193,15 @@ mod tests {
         let left = "The quick brown fox jumps over the lazy dog";
         let right = "The quick brown dog leaps over the lazy cat";
 
-        let (s, modified) = super::Lcs::new(
+        let (s, modified) = Lcs::new(
             left.split_whitespace(),
             || right.split_whitespace(),
             left.split_whitespace().count(),
             right.split_whitespace().count(),
         )
-        .diff(left.split_whitespace(), right.split_whitespace());
+            .diff(left.split_whitespace(), right.split_whitespace());
         assert!(modified);
-        use super::Edit::*;
+        use Edit::*;
         assert_eq!(
             s.collect::<Vec<_>>(),
             vec![

@@ -1,4 +1,5 @@
 // TODO figure out the reason why it's not Edit<T> { .., AssociatedChanged(T::D) }
+#[derive(Debug, PartialEq)]
 pub enum Edit<'a, T, D> {
     Copy,
     VariantChanged(&'a T, &'a T),

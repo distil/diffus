@@ -2,12 +2,13 @@ pub mod collection;
 pub mod map;
 pub mod enm;
 
-pub enum Edit<'a, T: crate::Diffable<'a>> {
+#[derive(Debug, PartialEq)]
+pub enum Edit<'a, T: crate::Diffable<'a> + ?Sized> {
     Copy,
     Change(T::D),
 }
 
-impl<'a, T: crate::Diffable<'a>> Edit<'a, T> {
+impl<'a, T: crate::Diffable<'a> + ?Sized> Edit<'a, T> {
     pub fn is_copy(&self) -> bool {
         if let Self::Copy = self {
             true

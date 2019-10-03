@@ -1,14 +1,14 @@
 use super::super::Diffable;
 
-pub enum Edit<'a, T: Diffable<'a>> {
+#[derive(Debug, PartialEq)]
+pub enum Edit<'a, T: Diffable<'a> + ?Sized> {
     Insert(&'a T),
     Remove,
     Copy,
     Change(T::D),
 }
 
-impl<'a, T: Diffable<'a>> Edit<'a, T> {
-    // FIXME run doctests default
+impl<'a, T: Diffable<'a> + ?Sized> Edit<'a, T> {
     //
     // Checks if the edit is an insert.
     //
@@ -25,7 +25,6 @@ impl<'a, T: Diffable<'a>> Edit<'a, T> {
             false
         }
     }
-    // FIXME doc tests
     pub fn is_remove(&self) -> bool {
         if let Self::Remove = self {
             true
