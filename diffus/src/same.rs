@@ -24,6 +24,12 @@ macro_rules! same_for_eq {
 
 same_for_eq! { u8, u16, u32, u64, i8, i16, i32, i64, char, str, String }
 
+#[cfg(feature = "snake_case-impl")]
+same_for_eq! { snake_case::SnakeCase }
+
+#[cfg(feature = "uuid-impl")]
+same_for_eq! { uuid::Uuid }
+
 impl<T: Same> Same for &T {
     fn same(&self, other: &Self) -> bool {
         (*self).same(*other)
