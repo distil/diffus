@@ -12,12 +12,12 @@ mod test {
     };
 
     #[derive(Diffus, Debug, PartialEq)]
-    struct Pair {
+    struct Identified {
         id: u32,
         value: u32,
     }
 
-    impl diffus::Same for Pair {
+    impl diffus::Same for Identified {
         fn same(&self, other: &Self) -> bool {
             self.id == other.id
         }
@@ -26,43 +26,43 @@ mod test {
     #[test]
     fn non_trivial_same_collection() {
         let left = vec![
-            Pair { id: 1, value: 0 },
-            Pair { id: 2, value: 0 },
-            Pair { id: 3, value: 0 },
-            Pair { id: 4, value: 0 },
-            Pair { id: 5, value: 0 },
-            Pair { id: 6, value: 0 },
-            Pair { id: 7, value: 0 },
+            Identified { id: 1, value: 0 },
+            Identified { id: 2, value: 0 },
+            Identified { id: 3, value: 0 },
+            Identified { id: 4, value: 0 },
+            Identified { id: 5, value: 0 },
+            Identified { id: 6, value: 0 },
+            Identified { id: 7, value: 0 },
         ];
         let right = vec![
-            Pair { id: 1, value: 0 },
-            Pair { id: 2, value: 1 },
-            Pair { id: 4, value: 0 },
-            Pair { id: 3, value: 0 },
-            Pair { id: 5, value: 0 },
-            Pair { id: 6, value: 0 },
+            Identified { id: 1, value: 0 },
+            Identified { id: 2, value: 1 },
+            Identified { id: 4, value: 0 },
+            Identified { id: 3, value: 0 },
+            Identified { id: 5, value: 0 },
+            Identified { id: 6, value: 0 },
         ];
 
         let diff = left.diff(&right);
 
         use diffus::edit::collection;
-        use diffus::edit::Edit;
+        use diffus::edit;
 
-        if let Edit::Change(diff) = diff {
+        if let edit::Edit::Change(diff) = diff {
             assert_eq!(
                 diff.collect::<Vec<_>>(),
                 vec![
-                    collection::Edit::Copy(&Pair { id: 1, value: 0 }),
-                    collection::Edit::Change(EditedPair {
-                        id: Edit::Copy,
-                        value: Edit::Change((&0, &1))
+                    collection::Edit::Copy(&Identified { id: 1, value: 0 }),
+                    collection::Edit::Change(EditedIdentified {
+                        id: edit::Edit::Copy,
+                        value: edit::Edit::Change((&0, &1))
                     }),
-                    collection::Edit::Remove(&Pair { id: 3, value: 0 }),
-                    collection::Edit::Copy(&Pair { id: 4, value: 0 }),
-                    collection::Edit::Insert(&Pair { id: 3, value: 0 }),
-                    collection::Edit::Copy(&Pair { id: 5, value: 0 }),
-                    collection::Edit::Copy(&Pair { id: 6, value: 0 }),
-                    collection::Edit::Remove(&Pair { id: 7, value: 0 }),
+                    collection::Edit::Remove(&Identified { id: 3, value: 0 }),
+                    collection::Edit::Copy(&Identified { id: 4, value: 0 }),
+                    collection::Edit::Insert(&Identified { id: 3, value: 0 }),
+                    collection::Edit::Copy(&Identified { id: 5, value: 0 }),
+                    collection::Edit::Copy(&Identified { id: 6, value: 0 }),
+                    collection::Edit::Remove(&Identified { id: 7, value: 0 }),
                 ]
             );
         } else {

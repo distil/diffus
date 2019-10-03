@@ -133,8 +133,6 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
     let vis = &input.vis;
     let edited_ident = syn::parse_str::<syn::Path>(&format!("Edited{}", ident)).unwrap();
 
-    let edited_derive = "";
-
     match input.data {
         syn::Data::Enum(syn::DataEnum {
             variants,

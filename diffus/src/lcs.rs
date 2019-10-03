@@ -30,12 +30,10 @@ impl<'a, T: Same + Diffable<'a> + ?Sized + 'a> Lcs<T> {
 
         for (i, x) in x.enumerate() {
             for (j, y) in y().enumerate() {
-                let i = i + 1;
-                let j = j + 1;
-                storage[a(i,j)] = if x.same(&y) {
-                    storage[a(i-1, j-1)] + 1
+                storage[a(i + 1,j + 1)] = if x.same(&y) {
+                    storage[a(i, j)] + 1
                 } else {
-                    storage[a(i, j-1)].max(storage[a(i-1, j)])
+                    storage[a(i + 1, j)].max(storage[a(i, j + 1)])
                 };
             }
         }
