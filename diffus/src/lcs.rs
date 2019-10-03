@@ -22,12 +22,20 @@ impl<'a, T: Same + Diffable<'a> + ?Sized + 'a> Lcs<T> {
 
         let mut storage = vec![0; width * height];
 
+        let a = |i: usize, j: usize| {
+            let result = j * width + i;
+
+            result
+        };
+
         for (i, x) in x.enumerate() {
             for (j, y) in y().enumerate() {
-                storage[(i + 1) * width + (j + 1)] = if x.same(&y) {
-                    storage[i * width + j] + 1
+                let i = i + 1;
+                let j = j + 1;
+                storage[a(i,j)] = if x.same(&y) {
+                    storage[a(i-1, j-1)] + 1
                 } else {
-                    storage[(i + 1) * width + j].max(storage[i * width + (j + 1)])
+                    storage[a(i, j-1)].max(storage[a(i-1, j)])
                 };
             }
         }
@@ -50,16 +58,18 @@ impl<'a, T: Same + Diffable<'a> + ?Sized + 'a> Lcs<T> {
     where
         T: 'a,
     {
+        let a = |i, j| j * self.width + i;
+
         let (queue, modified) = std::iter::from_fn(move || {
             let current_x = x.next();
             let current_y = y.next();
 
             let left = j
                 .checked_sub(1)
-                .map(|j_minus| self.storage[i * self.width + j_minus]);
+                .map(|j_minus| self.storage[a(i, j_minus)]);
             let above = i
                 .checked_sub(1)
-                .map(|i_minus| self.storage[i_minus * self.width + j]);
+                .map(|i_minus| self.storage[a(i_minus, j)]);
 
             if current_x.is_some() && current_y.is_some() && current_x.as_ref().unwrap().same(current_y.as_ref().unwrap()) {
                 i = i - 1;

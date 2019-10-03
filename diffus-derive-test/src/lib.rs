@@ -23,6 +23,8 @@ mod test {
         }
     }
 
+    // FIXME should non-unique sames be allowed?
+
     #[test]
     fn non_trivial_same_collection() {
         let left = vec![
@@ -33,31 +35,42 @@ mod test {
             Pair { id: 5, value: 0 },
             Pair { id: 6, value: 0 },
             Pair { id: 7, value: 0 },
-            Pair { id: 8, value: 0 },
         ];
         let right = vec![
             Pair { id: 1, value: 0 },
             Pair { id: 2, value: 1 },
             Pair { id: 4, value: 0 },
+            Pair { id: 3, value: 0 },
             Pair { id: 5, value: 0 },
             Pair { id: 6, value: 0 },
-            Pair { id: 8, value: 0 },
-            Pair { id: 7, value: 0 },
         ];
 
         let diff = left.diff(&right);
 
-        if let diffus::edit::Edit::Change(diff) = diff {
+        use diffus::edit::collection;
+        use diffus::edit::Edit;
+
+        if let Edit::Change(diff) = diff {
             assert_eq!(
                 diff.collect::<Vec<_>>(),
                 vec![
+                    collection::Edit::Copy(&Pair { id: 1, value: 0 }),
+                    collection::Edit::Change(EditedPair {
+                        id: Edit::Copy,
+                        value: Edit::Change((&0, &1))
+                    }),
+                    collection::Edit::Remove(&Pair { id: 3, value: 0 }),
+                    collection::Edit::Copy(&Pair { id: 4, value: 0 }),
+                    collection::Edit::Insert(&Pair { id: 3, value: 0 }),
+                    collection::Edit::Copy(&Pair { id: 5, value: 0 }),
+                    collection::Edit::Copy(&Pair { id: 6, value: 0 }),
+                    collection::Edit::Remove(&Pair { id: 7, value: 0 }),
                 ]
             );
         } else {
             unreachable!()
         }
     }
-
 
     #[derive(Diffus)]
     enum NestedTest {

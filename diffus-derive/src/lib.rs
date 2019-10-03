@@ -135,7 +135,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
     let edited_derive = "";
 
-    let result = match input.data {
+    match input.data {
         syn::Data::Enum(syn::DataEnum {
             variants,
             ..
@@ -337,9 +337,5 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             }
         },
         syn::Data::Union(_) => panic!("union type not supported yet"),
-    };
-
-    println!("{}", result);
-
-    return result;
+    }
 }
