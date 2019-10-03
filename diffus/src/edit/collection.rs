@@ -2,7 +2,7 @@ use crate::Same;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Edit<T, D> {
-    Copy(T), // FIXME Copy?
+    Copy(T),
     Change(D),
     Insert(T),
     Remove(T),

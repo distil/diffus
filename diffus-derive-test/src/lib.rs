@@ -23,8 +23,6 @@ mod test {
         }
     }
 
-    // FIXME should non-unique sames be allowed?
-
     #[test]
     fn non_trivial_same_collection() {
         let left = vec![

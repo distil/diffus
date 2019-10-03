@@ -9,7 +9,6 @@ pub enum Edit<'a, T: Diffable<'a> + ?Sized> {
 }
 
 impl<'a, T: Diffable<'a> + ?Sized> Edit<'a, T> {
-    // FIXME run doctests default
     //
     // Checks if the edit is an insert.
     //
@@ -26,7 +25,6 @@ impl<'a, T: Diffable<'a> + ?Sized> Edit<'a, T> {
             false
         }
     }
-    // FIXME doc tests
     pub fn is_remove(&self) -> bool {
         if let Self::Remove = self {
             true
