@@ -49,22 +49,29 @@ mod test {
         use diffus::edit;
 
         if let edit::Edit::Change(diff) = diff {
-            assert_eq!(
-                diff.collect::<Vec<_>>(),
-                vec![
-                    collection::Edit::Copy(&Identified { id: 1, value: 0 }),
-                    collection::Edit::Change(EditedIdentified {
-                        id: edit::Edit::Copy,
-                        value: edit::Edit::Change((&0, &1))
-                    }),
-                    collection::Edit::Remove(&Identified { id: 3, value: 0 }),
-                    collection::Edit::Copy(&Identified { id: 4, value: 0 }),
-                    collection::Edit::Insert(&Identified { id: 3, value: 0 }),
-                    collection::Edit::Copy(&Identified { id: 5, value: 0 }),
-                    collection::Edit::Copy(&Identified { id: 6, value: 0 }),
-                    collection::Edit::Remove(&Identified { id: 7, value: 0 }),
-                ]
-            );
+            let diff = diff.collect::<Vec<_>>();
+
+            if let EditedIdentified { id: edit::Edit::Copy, value } = diff.get(1).unwrap().change().unwrap() {
+                assert_eq!(value, &edit::Edit::Change((&0, &1)))
+            } else {
+                unreachable!()
+            }
+
+            if let collection::Edit::Remove(&Identified { id: 3, value: 0 }) = diff.get(2).unwrap() {
+            } else {
+                unreachable!()
+            }
+
+            if let collection::Edit::Copy(&Identified { id: 4, value: 0 }) = diff.get(3).unwrap() {
+            } else {
+                unreachable!()
+            }
+
+            if let collection::Edit::Insert(&Identified { id: 3, value: 0 }) = diff.get(4).unwrap() {
+            } else {
+                unreachable!()
+            }
+
         } else {
             unreachable!()
         }

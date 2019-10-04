@@ -56,4 +56,12 @@ impl<T: Same, D> Edit<T, D> {
             None
         }
     }
+
+    pub fn change(&self) -> Option<&D> {
+        if let Self::Change(value) = self {
+            Some(value)
+        } else {
+            None
+        }
+    }
 }
