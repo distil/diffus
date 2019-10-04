@@ -1,5 +1,7 @@
 use crate::Same;
 
+// FIXME references ?
+// FIXME T::D ?
 #[derive(Debug, PartialEq, Eq)]
 pub enum Edit<T, D> {
     Copy(T),
