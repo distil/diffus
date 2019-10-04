@@ -1,10 +1,12 @@
-use crate::{edit::{enm, Edit}, Diffable};
+use crate::{
+    edit::{enm, Edit},
+    Diffable,
+};
 
 impl<'a, T: Diffable<'a> + 'a> Diffable<'a> for Option<T> {
-    type D = enm::Edit<'a, Self, <<T as Diffable<'a>>::Target as Diffable<'a>>::D>;
-    type Target = Self;
+    type Diff = enm::Edit<'a, Self, T::Diff>;
 
-    fn diff(&'a self, other: &'a Self) -> Edit<'a, Self::Target> {
+    fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
         match (self, other) {
             (None, None) => Edit::Copy,
             (Some(a), Some(b)) => match a.diff(&b) {

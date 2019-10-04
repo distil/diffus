@@ -1,61 +1,59 @@
 extern crate proc_macro;
 
-use quote::{
-    quote,
-    format_ident,
-};
+use quote::{format_ident, quote};
 
 type Output = proc_macro2::TokenStream;
 
-
-fn edit_fields(
-    fields: &syn::Fields,
-) -> Output {
-    let edit_fields = fields.iter()
-        .map(|field| {
-            match field {
-                syn::Field { ident: Some(ident), ty, .. } => quote! {
-                    #ident: diffus::edit::Edit<'a, <#ty as diffus::Diffable<'a>>::Target>
-                },
-                        syn::Field { ident: None, ty, .. } => quote! {
-                    diffus::edit::Edit<'a, <#ty as diffus::Diffable<'a>>::Target>
-                },
-            }
-        });
+fn edit_fields(fields: &syn::Fields, lifetime: &syn::Lifetime) -> Output {
+    let edit_fields = fields.iter().map(|field| match field {
+        syn::Field {
+            ident: Some(ident),
+            ty,
+            ..
+        } => quote! {
+            #ident: diffus::edit::Edit<<#ty as diffus::Diffable<#lifetime>>::Diff>
+        },
+        syn::Field {
+            ident: None, ty, ..
+        } => quote! {
+            diffus::edit::Edit<<#ty as diffus::Diffable<#lifetime>>::Diff>
+        },
+    });
 
     quote! { #(#edit_fields),* }
 }
 
-fn field_ident(
-    enumerated_field: (usize, &syn::Field),
-    prefix: &str,
-) -> syn::Ident {
+fn field_ident(enumerated_field: (usize, &syn::Field), prefix: &str) -> syn::Ident {
     match enumerated_field {
-        (_, syn::Field { ident: Some(ident), .. }) => {
-            format_ident!("{}{}", prefix, ident)
-        }
+        (
+            _,
+            syn::Field {
+                ident: Some(ident), ..
+            },
+        ) => format_ident!("{}{}", prefix, ident),
         (i, syn::Field { ident: None, .. }) => {
             format_ident!("{}{}", prefix, unnamed_field_ident(i))
         }
     }
 }
 
-fn field_idents(
-    fields: &syn::Fields,
-    prefix: &str,
-) -> Output {
-    let field_idents = fields.iter().enumerate()
+fn field_idents(fields: &syn::Fields, prefix: &str) -> Output {
+    let field_idents = fields
+        .iter()
+        .enumerate()
         .map(|enumerated_field| field_ident(enumerated_field, prefix));
 
     quote! { #(#field_idents),* }
 }
 
-fn renamed_field_ident(
-    enumerated_field: (usize, &syn::Field),
-    prefix: &str,
-) -> Output {
+fn renamed_field_ident(enumerated_field: (usize, &syn::Field), prefix: &str) -> Output {
     match enumerated_field {
-        (_, syn::Field { ident: Some(ident), .. }) => {
+        (
+            _,
+            syn::Field {
+                ident: Some(ident), ..
+            },
+        ) => {
             let new_ident = format_ident!("{}{}", prefix, ident);
 
             quote! { #ident: #new_ident }
@@ -64,64 +62,72 @@ fn renamed_field_ident(
     }
 }
 
-fn renamed_field_idents(
-    fields: &syn::Fields,
-    prefix: &str,
-) -> Output {
-    let field_idents = fields.iter().enumerate()
+fn renamed_field_idents(fields: &syn::Fields, prefix: &str) -> Output {
+    let field_idents = fields
+        .iter()
+        .enumerate()
         .map(|enumerated_field| renamed_field_ident(enumerated_field, prefix));
 
     quote! { #(#field_idents),* }
 }
 
-fn matches_all_copy(
-    fields: &syn::Fields
-) -> Output {
-    let edit_fields_copy = fields.iter().enumerate()
-        .map(|enumerated_field| {
-            let field_ident = field_ident(enumerated_field, "");
+fn matches_all_copy(fields: &syn::Fields) -> Output {
+    let edit_fields_copy = fields.iter().enumerate().map(|enumerated_field| {
+        let field_ident = field_ident(enumerated_field, "");
 
-            quote! { #field_ident @ diffus::edit::Edit::Copy }
-        });
+        quote! { #field_ident @ diffus::edit::Edit::Copy }
+    });
 
     quote! {
         ( #(#edit_fields_copy),* ) => diffus::edit::Edit::Copy
     }
 }
 
-fn field_diffs(
-    fields: &syn::Fields
-) -> Output {
-    let field_diffs = fields.iter()
-        .enumerate()
-        .map(|(index, field)| {
-            let field_name = match field {
-                syn::Field { ident: Some(ident), .. } => quote! { #ident },
-                syn::Field { ident: None, .. } => {
-                    let ident = unnamed_field_name(index);
+fn field_diffs(fields: &syn::Fields) -> Output {
+    let field_diffs = fields.iter().enumerate().map(|(index, field)| {
+        let field_name = match field {
+            syn::Field {
+                ident: Some(ident), ..
+            } => quote! { #ident },
+            syn::Field { ident: None, .. } => {
+                let ident = unnamed_field_name(index);
 
-                    quote! { #ident }
-                }
-            };
-
-            quote! {
-                self.#field_name.diff(&other.#field_name)
+                quote! { #ident }
             }
-        });
+        };
+
+        quote! {
+            self.#field_name.diff(&other.#field_name)
+        }
+    });
 
     quote! { #(#field_diffs),* }
 }
 
-
-fn unnamed_field_ident(
-    i: usize,
-) -> syn::Ident {
+fn unnamed_field_ident(i: usize) -> syn::Ident {
     format_ident!("x{}", i as u32)
 }
-fn unnamed_field_name(
-    i: usize,
-) -> syn::Lit {
+fn unnamed_field_name(i: usize) -> syn::Lit {
     syn::parse_str(&format!("{}", i as u32)).unwrap()
+}
+
+fn input_lifetime(generics: &syn::Generics) -> Option<&syn::Lifetime> {
+    let mut lifetimes = generics.params.iter().filter_map(|generic_param| {
+        if let syn::GenericParam::Lifetime(syn::LifetimeDef { lifetime, .. }) = generic_param {
+            Some(lifetime)
+        } else {
+            None
+        }
+    });
+
+    let lifetime = lifetimes.next();
+
+    assert!(
+        lifetimes.next().is_none(),
+        "Multiple lifetimes not supported yet"
+    );
+
+    lifetime
 }
 
 
@@ -131,42 +137,50 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
     let ident = &input.ident;
     let vis = &input.vis;
+    let where_clause = &input.generics.where_clause;
     let edited_ident = syn::parse_str::<syn::Path>(&format!("Edited{}", ident)).unwrap();
 
-    match input.data {
-        syn::Data::Enum(syn::DataEnum {
-            variants,
-            ..
-        }) => {
-            let edit_variants = variants.iter().map(|syn::Variant {
-                ident, fields, ..
-            }| {
-                let edit_fields = edit_fields(&fields);
+    let data_lifetime = input_lifetime(&input.generics);
+    let default_lifetime = syn::parse_str::<syn::Lifetime>("'diffus_a").unwrap();
+    let impl_lifetime = data_lifetime.unwrap_or(&default_lifetime);
+
+    proc_macro::TokenStream::from(match input.data {
+        syn::Data::Enum(syn::DataEnum { variants, .. }) => {
+            let edit_variants = variants.iter().map(|syn::Variant { ident, fields, .. }| {
+                let edit_fields = edit_fields(&fields, &impl_lifetime);
 
                 match fields {
                     syn::Fields::Named(syn::FieldsNamed { .. }) => {
                         quote! {
                             #ident { #edit_fields }
                         }
-                    },
+                    }
                     syn::Fields::Unnamed(syn::FieldsUnnamed { .. }) => {
                         quote! {
                             #ident ( #edit_fields )
                         }
-                    },
+                    }
                     syn::Fields::Unit => {
                         quote! {
                             #ident
                         }
-                    },
+                    }
                 }
             });
 
             let has_non_unit_variant = variants.iter().any(|syn::Variant { fields, .. }| {
-                if let syn::Fields::Unit = fields { false } else { true }
+                if let syn::Fields::Unit = fields {
+                    false
+                } else {
+                    true
+                }
             });
 
-            let lifetime = if has_non_unit_variant { Some(quote! { <'a> }) } else { None };
+            let unit_enum_impl_lifetime = if has_non_unit_variant {
+                Some(impl_lifetime.clone())
+            } else {
+                None
+            };
 
             let variants_matches = variants.iter().map(|syn::Variant { ident: variant_ident, fields, .. }| {
 
@@ -240,16 +254,15 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             });
 
-            let result = quote! {
-                #vis enum #edited_ident #lifetime {
+            quote! {
+                #vis enum #edited_ident <#unit_enum_impl_lifetime> where #where_clause {
                     #(#edit_variants),*
                 }
 
-                impl<'a> diffus::Diffable<'a> for #ident {
-                    type D = diffus::edit::enm::Edit<'a, Self, #edited_ident #lifetime>;
-                    type Target = Self;
+                impl<#impl_lifetime> diffus::Diffable<#impl_lifetime> for #ident <#data_lifetime> where #where_clause {
+                    type Diff = diffus::edit::enm::Edit<#impl_lifetime, Self, #edited_ident <#unit_enum_impl_lifetime>>;
 
-                    fn diff(&'a self, other: &'a Self) -> diffus::edit::Edit<'a, Self::Target> {
+                    fn diff(&#impl_lifetime self, other: &#impl_lifetime Self) -> diffus::edit::Edit<Self::Diff> {
                         match (self, other) {
                             #(#variants_matches,)*
                             (self_variant, other_variant) => diffus::edit::Edit::Change(diffus::edit::enm::Edit::VariantChanged(
@@ -258,32 +271,25 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         }
                     }
                 }
-
-            };
-
-            proc_macro::TokenStream::from(result)
-        },
-        syn::Data::Struct(syn::DataStruct {
-            fields,
-            ..
-        }) => {
-            let edit_fields = edit_fields(&fields);
+            }
+        }
+        syn::Data::Struct(syn::DataStruct { fields, .. }) => {
+            let edit_fields = edit_fields(&fields, &impl_lifetime);
             let field_diffs = field_diffs(&fields);
             let field_idents = field_idents(&fields, "");
             let matches_all_copy = matches_all_copy(&fields);
 
             match fields {
                 syn::Fields::Named(_) => {
-                    proc_macro::TokenStream::from(quote! {
-                        #vis struct #edited_ident<'a> {
+                    quote! {
+                        #vis struct #edited_ident<#impl_lifetime> where #where_clause {
                             #edit_fields
                         }
 
-                        impl<'a> diffus::Diffable<'a> for #ident {
-                            type D = #edited_ident<'a>;
-                            type Target = Self;
+                        impl<#impl_lifetime> diffus::Diffable<#impl_lifetime> for #ident <#data_lifetime> where #where_clause {
+                            type Diff = #edited_ident<#impl_lifetime>;
 
-                            fn diff(&'a self, other: &'a Self) -> diffus::edit::Edit<'a, Self::Target> {
+                            fn diff(&#impl_lifetime self, other: &#impl_lifetime Self) -> diffus::edit::Edit<Self::Diff> {
                                 match ( #field_diffs ) {
                                     #matches_all_copy,
                                     ( #field_idents ) => diffus::edit::Edit::Change(
@@ -292,17 +298,16 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                                 }
                             }
                         }
-                    })
-                },
+                    }
+                }
                 syn::Fields::Unnamed(_) => {
-                    proc_macro::TokenStream::from(quote! {
-                        #vis struct #edited_ident<'a> ( #edit_fields );
+                    quote! {
+                        #vis struct #edited_ident<#impl_lifetime> ( #edit_fields ) where #where_clause;
 
-                        impl<'a> diffus::Diffable<'a> for #ident {
-                            type D = #edited_ident<'a>;
-                            type Target = Self;
+                        impl<#impl_lifetime> diffus::Diffable<#impl_lifetime> for #ident <#data_lifetime> where #where_clause {
+                            type Diff = #edited_ident<#impl_lifetime>;
 
-                            fn diff(&'a self, other: &'a Self) -> diffus::edit::Edit<'a, Self::Target> {
+                            fn diff(&#impl_lifetime self, other: &#impl_lifetime Self) -> diffus::edit::Edit<Self::Diff> {
                                 match ( #field_diffs ) {
                                     #matches_all_copy,
                                     ( #field_idents ) => diffus::edit::Edit::Change(
@@ -311,25 +316,23 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                                 }
                             }
                         }
-                        
-                    })
-                },
+                    }
+                }
                 syn::Fields::Unit => {
-                    proc_macro::TokenStream::from(quote! {
-                        #vis struct #edited_ident;
+                    quote! {
+                        #vis struct #edited_ident< > where #where_clause;
 
-                        impl<'a> diffus::Diffable<'a> for #ident {
-                            type D = #edited_ident;
-                            type Target = Self;
+                        impl<#impl_lifetime> diffus::Diffable<#impl_lifetime> for #ident< > where #where_clause {
+                            type Diff = #edited_ident;
 
-                            fn diff(&'a self, other: &'a Self) -> diffus::edit::Edit<'a, Self::Target> {
+                            fn diff(&#impl_lifetime self, other: &#impl_lifetime Self) -> diffus::edit::Edit<Self::Diff> {
                                 diffus::edit::Edit::Copy
                             }
                         }
-                    })
+                    }
                 }
             }
-        },
+        }
         syn::Data::Union(_) => panic!("union type not supported yet"),
-    }
+    })
 }

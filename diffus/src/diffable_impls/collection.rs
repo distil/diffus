@@ -1,16 +1,16 @@
 use crate::{
-    edit::{collection, Edit}, lcs::Lcs, Diffable,
-    Same,
+    edit::{collection, Edit},
+    lcs::Lcs,
+    Diffable, Same,
 };
 
 macro_rules! collection_impl {
     ($($typ:ident),*) => {
         $(
             impl<'a, T: Same + Diffable<'a> + 'a> Diffable<'a> for $typ<T> {
-                type D = std::collections::vec_deque::IntoIter<collection::Edit<&'a T, <<T as Diffable<'a>>::Target as Diffable<'a>>::D>>;
-                type Target = Self;
+                type Diff = std::collections::vec_deque::IntoIter<collection::Edit<&'a T, T::Diff>>;
 
-                fn diff(&'a self, other: &'a Self) -> Edit<'a, Self::Target> {
+                fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
                     let (s, modified) = Lcs::new(
                         self.iter(),
                         || other.iter(),
@@ -39,10 +39,9 @@ macro_rules! set_impl {
     ($(($typ:ident, $key_constraint:ident)),*) => {
         $(
             impl<'a, T: Same + Diffable<'a> + $key_constraint + 'a> Diffable<'a> for $typ<T> {
-                type D = std::collections::vec_deque::IntoIter<collection::Edit<&'a T, <<T as Diffable<'a>>::Target as Diffable<'a>>::D>>;
-                type Target = Self;
+                type Diff = std::collections::vec_deque::IntoIter<collection::Edit<&'a T, T::Diff>>;
 
-                fn diff(&'a self, other: &'a Self) -> Edit<'a, Self::Target> {
+                fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
                     let (s, modified) = Lcs::new(
                         self.iter(),
                         || other.iter(),
@@ -62,7 +61,10 @@ macro_rules! set_impl {
     }
 }
 
-use std::{collections::{BTreeSet, HashSet}, hash::Hash};
+use std::{
+    collections::{BTreeSet, HashSet},
+    hash::Hash,
+};
 set_impl! {
     (BTreeSet, Hash),
     (HashSet, Hash)

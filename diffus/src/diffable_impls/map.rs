@@ -6,11 +6,10 @@ use crate::{
 macro_rules! map_impl {
     ($(($typ:ident, $key_constraint:ident)),*) => {
         $(
-            impl<'a, K: Eq + $key_constraint + 'a, V: Diffable<'a, Target = V> + 'a> Diffable<'a> for $typ<K, V> {
-                type D = $typ<&'a K, map::Edit<'a, V>>;
-                type Target = Self;
+            impl<'a, K: Eq + $key_constraint + 'a, V: Diffable<'a> + 'a> Diffable<'a> for $typ<K, V> {
+                type Diff = $typ<&'a K, map::Edit<'a, V>>;
 
-                fn diff(&'a self, other: &'a Self) -> Edit<Self::Target> {
+                fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
                     let intersection = self
                         .iter()
                         .filter_map(|(k, v)| Some((k, (v, other.get(k)?))));
@@ -36,7 +35,10 @@ macro_rules! map_impl {
     }
 }
 
-use std::{collections::{BTreeMap, HashMap}, hash::Hash};
+use std::{
+    collections::{BTreeMap, HashMap},
+    hash::Hash,
+};
 map_impl! {
     (BTreeMap, Ord),
     (HashMap, Hash)
@@ -45,7 +47,7 @@ map_impl! {
 #[cfg(feature = "indexmap-impl")]
 use indexmap::IndexMap;
 #[cfg(feature = "indexmap-impl")]
-map_impl ! { (IndexMap, Hash) }
+map_impl! { (IndexMap, Hash) }
 
 #[cfg(test)]
 mod tests {
