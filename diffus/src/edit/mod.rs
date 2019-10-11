@@ -2,11 +2,24 @@ pub mod collection;
 pub mod enm;
 pub mod map;
 
-#[derive(Debug, PartialEq)]
-pub enum Edit<Diff> {
-    Copy,
-    Change(Diff),
+#[cfg(feature = "serde")]
+use serde::Serialize;
+
+macro_rules! edit_struct_contstraint {
+    ($($constraints:tt),*) => {
+        #[cfg_attr(feature = "serde", derive(serde::Serialize))]
+        #[derive(Debug, PartialEq)]
+        pub enum Edit<Diff: $($constraints)?> {
+            Copy,
+            Change(Diff),
+        }
+    }
 }
+
+#[cfg(feature = "serde")]
+edit_struct_contstraint!{ serde::Serialize }
+#[cfg(not(feature = "serde"))]
+edit_struct_contstraint!{ }
 
 impl<Diff> Edit<Diff> {
     pub fn is_copy(&self) -> bool {

@@ -3,7 +3,8 @@ pub mod edit;
 mod lcs;
 pub mod same;
 
-pub trait Diffable<'a> {
+pub trait Diffable<'a> where
+{
     type Diff: 'a;
 
     fn diff(&'a self, other: &'a Self) -> edit::Edit<Self::Diff>;
