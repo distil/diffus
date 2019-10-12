@@ -2,11 +2,11 @@ pub mod collection;
 pub mod enm;
 pub mod map;
 
-macro_rules! edit_struct_contstraint {
-    ($($constraints:tt),*) => {
-        #[cfg(feature = "serialize-impl")]
-        use serde::Serialize;
+#[cfg(feature = "serialize-impl")]
+use serde::Serialize;
 
+macro_rules! edit {
+    (: $($constraints:tt),*) => {
         #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
         #[derive(Debug, PartialEq)]
         pub enum Edit<Diff: $($constraints)?> {
@@ -52,7 +52,6 @@ macro_rules! edit_struct_contstraint {
 }
 
 #[cfg(feature = "serialize-impl")]
-edit_struct_contstraint!{ Serialize }
-
+edit!{ : Serialize }
 #[cfg(not(feature = "serialize-impl"))]
-edit_struct_contstraint!{ }
+edit!{ : }

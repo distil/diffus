@@ -3,20 +3,34 @@ use crate::{
     Diffable,
 };
 
-impl<'a, T: Diffable<'a> + 'a> Diffable<'a> for Option<T> {
-    type Diff = enm::Edit<'a, Self, T::Diff>;
+#[cfg(feature = "serialize-impl")]
+use serde::Serialize;
 
-    fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
-        match (self, other) {
-            (None, None) => Edit::Copy,
-            (Some(a), Some(b)) => match a.diff(&b) {
-                Edit::Copy => Edit::Copy,
-                Edit::Change(d) => Edit::Change(enm::Edit::AssociatedChanged(d)),
-            },
-            _ => Edit::Change(enm::Edit::VariantChanged(self, other)),
+// FIXME verify is this constraint needed?
+macro_rules! option_impl_constraint {
+    ($($constraints:tt),*) => {
+        impl<'a, T: Diffable<'a> $(+$constraints)? + 'a> Diffable<'a> for Option<T> {
+            type Diff = enm::Edit<'a, Self, T::Diff>;
+
+            fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
+                match (self, other) {
+                    (None, None) => Edit::Copy,
+                    (Some(a), Some(b)) => match a.diff(&b) {
+                        Edit::Copy => Edit::Copy,
+                        Edit::Change(d) => Edit::Change(enm::Edit::AssociatedChanged(d)),
+                    },
+                    _ => Edit::Change(enm::Edit::VariantChanged(self, other)),
+                }
+            }
         }
     }
 }
+
+#[cfg(feature = "serialize-impl")]
+option_impl_constraint!{ Serialize }
+#[cfg(not(feature = "serialize-impl"))]
+option_impl_constraint!{ }
+
 
 #[cfg(test)]
 mod tests {

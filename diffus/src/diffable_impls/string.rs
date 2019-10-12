@@ -18,9 +18,6 @@ impl<'a> Diffable<'a> for str {
         )
         .diff(self_chars.iter(), other_chars.iter());
 
-        // TODO: The above Lcs only handles iterators to references, but characters are
-        // TODO: intermediates. The conversion is done here but ideally should never need to
-        // TODO: be done at all
         let s = s
             .map(|edit| match edit {
                 collection::Edit::Remove(ch) => collection::Edit::Remove(*ch),
@@ -46,6 +43,7 @@ impl<'a> Diffable<'a> for String {
         self.as_str().diff(other.as_str())
     }
 }
+
 
 #[cfg(test)]
 mod tests {
