@@ -59,10 +59,10 @@ mod tests {
             [(1, 1), (2, 3), (4, 4)].iter().cloned().collect();
 
         if let Edit::Change(diff) = unity.diff(&not_unity) {
-            assert!(diff.get(&1).unwrap().is_copy());
-            assert_eq!(diff.get(&2).unwrap().change().unwrap(), &(&2, &3));
-            assert!(diff.get(&3).unwrap().is_remove());
-            assert_eq!(diff.get(&4).unwrap().insert().unwrap(), &4);
+            assert!(diff[&1].is_copy());
+            assert_eq!(diff[&2].change().unwrap(), &(&2, &3));
+            assert!(diff[&3].is_remove());
+            assert_eq!(diff[&4].insert().unwrap(), &4);
         } else {
             unreachable!()
         }

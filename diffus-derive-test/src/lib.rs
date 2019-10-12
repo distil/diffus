@@ -49,22 +49,18 @@ mod test {
         use diffus::edit;
 
         if let edit::Edit::Change(diff) = diff {
-            assert_eq!(
-                diff.collect::<Vec<_>>(),
-                vec![
-                    collection::Edit::Copy(&Identified { id: 1, value: 0 }),
-                    collection::Edit::Change(EditedIdentified {
-                        id: edit::Edit::Copy,
-                        value: edit::Edit::Change((&0, &1))
-                    }),
-                    collection::Edit::Remove(&Identified { id: 3, value: 0 }),
-                    collection::Edit::Copy(&Identified { id: 4, value: 0 }),
-                    collection::Edit::Insert(&Identified { id: 3, value: 0 }),
-                    collection::Edit::Copy(&Identified { id: 5, value: 0 }),
-                    collection::Edit::Copy(&Identified { id: 6, value: 0 }),
-                    collection::Edit::Remove(&Identified { id: 7, value: 0 }),
-                ]
-            );
+            let diff = diff.collect::<Vec<_>>();
+
+            if let (
+                &collection::Edit::Change(EditedIdentified { id: edit::Edit::Copy, value: edit::Edit::Change((&0, &1)) }),
+                &collection::Edit::Remove(&Identified { id: 3, value: 0 }),
+                &collection::Edit::Copy(&Identified { id: 4, value: 0 }),
+                &collection::Edit::Insert(&Identified { id: 3, value: 0 }),
+            ) = (&diff[1], &diff[2], &diff[3], &diff[4]) {
+            } else {
+                unreachable!()
+            }
+
         } else {
             unreachable!()
         }
