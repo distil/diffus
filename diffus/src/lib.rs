@@ -3,7 +3,7 @@ pub mod edit;
 mod lcs;
 pub mod same;
 
-pub trait Diffable<'a> where
+pub trait Diffable<'a>
 {
     type Diff: 'a;
 

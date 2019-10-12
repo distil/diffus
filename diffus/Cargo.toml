@@ -23,6 +23,7 @@ uuid-impl = [ "uuid" ]
 snake_case-impl = [ "snake_case" ]
 
 serialize-impl = [
+    "serde",
     "uuid/serde",
     "snake_case/serde"
 ]
