@@ -51,23 +51,12 @@ mod test {
         if let edit::Edit::Change(diff) = diff {
             let diff = diff.collect::<Vec<_>>();
 
-            if let EditedIdentified { id: edit::Edit::Copy, value } = diff.get(1).unwrap().change().unwrap() {
-                assert_eq!(value, &edit::Edit::Change((&0, &1)))
-            } else {
-                unreachable!()
-            }
-
-            if let collection::Edit::Remove(&Identified { id: 3, value: 0 }) = diff.get(2).unwrap() {
-            } else {
-                unreachable!()
-            }
-
-            if let collection::Edit::Copy(&Identified { id: 4, value: 0 }) = diff.get(3).unwrap() {
-            } else {
-                unreachable!()
-            }
-
-            if let collection::Edit::Insert(&Identified { id: 3, value: 0 }) = diff.get(4).unwrap() {
+            if let (
+                &collection::Edit::Change(EditedIdentified { id: edit::Edit::Copy, value: edit::Edit::Change((&0, &1)) }),
+                &collection::Edit::Remove(&Identified { id: 3, value: 0 }),
+                &collection::Edit::Copy(&Identified { id: 4, value: 0 }),
+                &collection::Edit::Insert(&Identified { id: 3, value: 0 }),
+            ) = (&diff[1], &diff[2], &diff[3], &diff[4]) {
             } else {
                 unreachable!()
             }
