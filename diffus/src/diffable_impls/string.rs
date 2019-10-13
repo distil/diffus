@@ -4,7 +4,7 @@ use crate::{
     Diffable,
 };
 
-
+/* FIXME
 impl<'a> Diffable<'a> for str {
     type Diff = Vec<collection::Edit<char, (char, char)>>;
 
@@ -79,3 +79,5 @@ mod tests {
         }
     }
 }
+
+*/
