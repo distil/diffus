@@ -6,9 +6,11 @@ mod test {
 
     use diffus::{self, Diffable};
 
+    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus)]
     struct A<'a>(&'a u32);
 
+    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus, Debug, PartialEq)]
     struct Identified {
         id: u32,
@@ -62,11 +64,13 @@ mod test {
         }
     }
 
+    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus)]
     enum NestedTest {
         T { test: Test },
     }
 
+    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Debug, Diffus, PartialEq, Eq)]
     enum Test {
         A,
@@ -79,6 +83,7 @@ mod test {
     /*
      * Verify enum refering to own type via hashmap
      */
+    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Debug, Diffus, PartialEq)]
     enum RecursiveHashMap {
         Node(std::collections::HashMap<u32, RecursiveHashMap>),
@@ -88,6 +93,7 @@ mod test {
     /*
      * Verify enums with only Unit variants.
      */
+    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus)]
     enum EnumNoLifetimeParameter {
         A,
@@ -100,17 +106,21 @@ mod test {
          */
         use diffus_derive::Diffus;
 
+        #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
         #[derive(Diffus)]
         pub struct VisTestStructUnit;
 
+        #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
         #[derive(Diffus)]
         pub struct VisTestStructTuple(u32);
 
+        #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
         #[derive(Diffus)]
         pub struct VisTestStruct {
             x: u32,
         }
 
+        #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
         #[derive(Diffus)]
         pub enum VisTestEnum {
             A,
@@ -205,18 +215,22 @@ mod test {
         }
     }
 
+    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus, Debug, PartialEq)]
     struct Inner {
         x: String,
         y: u32,
     }
 
+    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus, Debug, PartialEq)]
     struct Unit;
 
+    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus, Debug, PartialEq)]
     struct Unnamed(u32, String);
 
+    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus, Debug, PartialEq)]
     struct Outer {
         inner: Inner,
