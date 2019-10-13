@@ -113,7 +113,7 @@ macro_rules! lcs {
                     },
                 );
 
-                (queue.into_iter().into_vec(), modified)
+                (queue.into_iter().collect::<Vec<_>>(), modified)
             }
 
             /// Returns the iterator of changes along with a bool indicating if there were any `Insert`/ `Remove`.
@@ -158,78 +158,6 @@ macro_rules! lcs {
                 )
             }
         }
-
-
-        #[cfg(test)]
-        mod tests {
-            use super::*;
-
-            #[test]
-            fn characters() {
-                let left = "XMJYAUZ";
-                let right = "MZJAWXU";
-                let left_chars = left.chars().collect::<Vec<_>>();
-                let right_chars = right.chars().collect::<Vec<_>>();
-
-                let (s, modified) = Lcs::new(
-                    left_chars.iter(),
-                    || right_chars.iter(),
-                    left_chars.len(),
-                    right_chars.len(),
-                )
-                .diff(left_chars.iter(), right_chars.iter());
-                assert!(modified);
-                use Edit::*;
-                assert_eq!(
-                    s.collect::<Vec<_>>(),
-                    vec![
-                        Remove(&'X'),
-                        Copy(&'M'),
-                        Insert(&'Z'),
-                        Copy(&'J'),
-                        Remove(&'Y'),
-                        Copy(&'A'),
-                        Insert(&'W'),
-                        Insert(&'X'),
-                        Copy(&'U'),
-                        Remove(&'Z')
-                    ]
-                );
-            }
-
-            #[test]
-            fn words() {
-                let left = "The quick brown fox jumps over the lazy dog";
-                let right = "The quick brown dog leaps over the lazy cat";
-
-                let (s, modified) = Lcs::new(
-                    left.split_whitespace(),
-                    || right.split_whitespace(),
-                    left.split_whitespace().count(),
-                    right.split_whitespace().count(),
-                )
-                .diff(left.split_whitespace(), right.split_whitespace());
-                assert!(modified);
-                use Edit::*;
-                assert_eq!(
-                    s.collect::<Vec<_>>(),
-                    vec![
-                        Copy("The"),
-                        Copy("quick"),
-                        Copy("brown"),
-                        Remove("fox"),
-                        Remove("jumps"),
-                        Insert("dog"),
-                        Insert("leaps"),
-                        Copy("over"),
-                        Copy("the"),
-                        Copy("lazy"),
-                        Remove("dog"),
-                        Insert("cat")
-                    ]
-                );
-            }
-        }
     }
 }
 
@@ -237,3 +165,76 @@ macro_rules! lcs {
 lcs!{ : Serialize }
 #[cfg(not(feature = "serialize-impl"))]
 lcs!{ : }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn characters() {
+        let left = "XMJYAUZ";
+        let right = "MZJAWXU";
+        let left_chars = left.chars().collect::<Vec<_>>();
+        let right_chars = right.chars().collect::<Vec<_>>();
+
+        let (s, modified) = Lcs::new(
+            left_chars.iter(),
+            || right_chars.iter(),
+            left_chars.len(),
+            right_chars.len(),
+        )
+        .diff(left_chars.iter(), right_chars.iter());
+        assert!(modified);
+        use Edit::*;
+        assert_eq!(
+            s.collect::<Vec<_>>(),
+            vec![
+                Remove(&'X'),
+                Copy(&'M'),
+                Insert(&'Z'),
+                Copy(&'J'),
+                Remove(&'Y'),
+                Copy(&'A'),
+                Insert(&'W'),
+                Insert(&'X'),
+                Copy(&'U'),
+                Remove(&'Z')
+            ]
+        );
+    }
+
+    #[test]
+    fn words() {
+        let left = "The quick brown fox jumps over the lazy dog";
+        let right = "The quick brown dog leaps over the lazy cat";
+
+        let (s, modified) = Lcs::new(
+            left.split_whitespace(),
+            || right.split_whitespace(),
+            left.split_whitespace().count(),
+            right.split_whitespace().count(),
+        )
+        .diff(left.split_whitespace(), right.split_whitespace());
+        assert!(modified);
+        use Edit::*;
+        assert_eq!(
+            s.collect::<Vec<_>>(),
+            vec![
+                Copy("The"),
+                Copy("quick"),
+                Copy("brown"),
+                Remove("fox"),
+                Remove("jumps"),
+                Insert("dog"),
+                Insert("leaps"),
+                Copy("over"),
+                Copy("the"),
+                Copy("lazy"),
+                Remove("dog"),
+                Insert("cat")
+            ]
+        );
+    }
+}
+
