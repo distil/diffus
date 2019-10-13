@@ -6,7 +6,7 @@ pub mod map;
 use serde::Serialize;
 
 macro_rules! edit {
-    (: $($constraints:tt),*) => {
+    (: $($constraints:ident),*) => {
         #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
         #[derive(Debug, PartialEq)]
         pub enum Edit<Diff: $($constraints)?> {
@@ -40,7 +40,10 @@ macro_rules! edit {
             }
         }
 
-        impl<'a, Diff: $($constraints)?, T: crate::Diffable<'a, Diff = Diff> + 'a> Into<map::Edit<'a, T>> for Edit<Diff> {
+        impl<'a,
+            Diff: $($constraints)?,
+            T: crate::Diffable<'a, Diff = Diff> $(+$constraints)? + 'a
+        > Into<map::Edit<'a, T>> for Edit<Diff> {
             fn into(self) -> map::Edit<'a, T> {
                 match self {
                     Self::Copy => map::Edit::Copy,

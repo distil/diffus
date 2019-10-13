@@ -5,7 +5,7 @@ use serde::Serialize;
 
 
 macro_rules! edit {
-    (: $($constraints:tt),*) => {
+    (: $($constraints:ident),*) => {
         // FIXME remove Debug
         // FIXME T: Same?
         #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
@@ -17,7 +17,7 @@ macro_rules! edit {
             Remove(T),
         }
 
-        impl<T: Same $(+$constraints)?, Diff: $($constraints)?> Edit<T, Diff> {
+        impl<T: Same $(+$constraints)*, Diff: $($constraints)?> Edit<T, Diff> {
             pub fn is_copy(&self) -> bool {
                 if let Self::Copy(_) = self {
                     true

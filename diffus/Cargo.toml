@@ -24,6 +24,7 @@ snake_case-impl = [ "snake_case" ]
 
 serialize-impl = [
     "serde",
+    "indexmap/serde-1",
     "uuid/serde",
     "snake_case/serde"
 ]

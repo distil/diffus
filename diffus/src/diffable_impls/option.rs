@@ -8,7 +8,7 @@ use serde::Serialize;
 
 // FIXME verify is this constraint needed?
 macro_rules! option_impl_constraint {
-    ($($constraints:tt),*) => {
+    (: $($constraints:ident),*) => {
         impl<'a, T: Diffable<'a> $(+$constraints)? + 'a> Diffable<'a> for Option<T> {
             type Diff = enm::Edit<'a, Self, T::Diff>;
 
@@ -27,9 +27,9 @@ macro_rules! option_impl_constraint {
 }
 
 #[cfg(feature = "serialize-impl")]
-option_impl_constraint!{ Serialize }
+option_impl_constraint!{ : Serialize }
 #[cfg(not(feature = "serialize-impl"))]
-option_impl_constraint!{ }
+option_impl_constraint!{ : }
 
 
 #[cfg(test)]

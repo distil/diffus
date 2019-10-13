@@ -12,7 +12,7 @@ macro_rules! collection_impl {
     ($typ:ident : $($constraint:ident),*) => {
         impl<'a, T: Same $(+$constraint)* + Diffable<'a> + 'a> Diffable<'a> for $typ<T> {
             // FIXME check if possible to do more generic
-            type Diff = std::collections::vec_deque::IntoIter<collection::Edit<&'a T, T::Diff>>;
+            type Diff = Vec<collection::Edit<&'a T, T::Diff>>;
 
             fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
                 let (s, modified) = Lcs::new(
@@ -54,28 +54,26 @@ collection_impl! { VecDeque : }
 
 // FIXME continue here
 macro_rules! set_impl {
-    ($(($typ:ident, $key_constraint:ident)),*) => {
-        $(
-            impl<'a, T: Same + Diffable<'a> + $key_constraint + 'a> Diffable<'a> for $typ<T> {
-                type Diff = std::collections::vec_deque::IntoIter<collection::Edit<&'a T, T::Diff>>;
+    (($typ:ident, $key_constraint:ident) : $($constraint:ident),* ) => {
+        impl<'a, T: Same + Diffable<'a> + $key_constraint $(+$constraint)* + 'a> Diffable<'a> for $typ<T> {
+            type Diff = Vec<collection::Edit<&'a T, T::Diff>>;
 
-                fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
-                    let (s, modified) = Lcs::new(
-                        self.iter(),
-                        || other.iter(),
-                        self.len(),
-                        other.len(),
-                    )
-                        .diff_unordered(self.iter(), other.iter());
+            fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
+                let (s, modified) = Lcs::new(
+                    self.iter(),
+                    || other.iter(),
+                    self.len(),
+                    other.len(),
+                )
+                    .diff_unordered(self.iter(), other.iter());
 
-                    if modified {
-                        Edit::Change(s)
-                    } else {
-                        Edit::Copy
-                    }
+                if modified {
+                    Edit::Change(s)
+                } else {
+                    Edit::Copy
                 }
             }
-        )*
+        }
     }
 }
 
@@ -83,10 +81,15 @@ use std::{
     collections::{BTreeSet, HashSet},
     hash::Hash,
 };
-set_impl! {
-    (BTreeSet, Hash),
-    (HashSet, Hash)
-}
+
+#[cfg(feature = "serialize-impl")]
+set_impl! { (BTreeSet, Hash) : Serialize }
+#[cfg(feature = "serialize-impl")]
+set_impl! { (HashSet, Hash) : Serialize }
+#[cfg(not(feature = "serialize-impl"))]
+set_impl! { (BTreeSet, Hash) : }
+#[cfg(not(feature = "serialize-impl"))]
+set_impl! { (HashSet, Hash) : }
 
 
 #[cfg(test)]

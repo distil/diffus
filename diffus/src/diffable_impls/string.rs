@@ -4,6 +4,7 @@ use crate::{
     Diffable,
 };
 
+
 impl<'a> Diffable<'a> for str {
     type Diff = Vec<collection::Edit<char, (char, char)>>;
 
@@ -18,7 +19,7 @@ impl<'a> Diffable<'a> for str {
         )
         .diff(self_chars.iter(), other_chars.iter());
 
-        let s = s
+        let s = s.iter()
             .map(|edit| match edit {
                 collection::Edit::Remove(ch) => collection::Edit::Remove(*ch),
                 collection::Edit::Insert(ch) => collection::Edit::Insert(*ch),
