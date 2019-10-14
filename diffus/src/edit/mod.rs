@@ -5,6 +5,7 @@ pub mod map;
 #[cfg(feature = "serialize-impl")]
 use serde::Serialize;
 
+
 macro_rules! edit {
     (: $($constraints:ident),*) => {
         #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]

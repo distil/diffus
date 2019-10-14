@@ -7,12 +7,35 @@ use crate::{
 #[cfg(feature = "serialize-impl")]
 use serde::Serialize;
 
-// FIXME ignore successive elements in repetition
+
+#[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
+pub struct CollectionDiff<T>(crate::lcs::LcsResult<T>);
+
+pub struct IntoIter<T>(<crate::lcs::LcsResult<T> as std::iter::IntoIterator>::IntoIter);
+
+impl<T> std::iter::IntoIterator for CollectionDiff<T> {
+    type Item = T;
+    type IntoIter = IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter(self.0.into_iter())
+    }
+
+}
+
+impl<T> std::iter::Iterator for IntoIter<T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
+    }
+}
+
 macro_rules! collection_impl {
     ($typ:ident : $($constraint:ident),*) => {
         impl<'a, T: Same $(+$constraint)* + Diffable<'a> + 'a> Diffable<'a> for $typ<T> {
             // FIXME check if possible to do more generic
-            type Diff = Vec<collection::Edit<&'a T, T::Diff>>;
+            type Diff = CollectionDiff<collection::Edit<&'a T, T::Diff>>;
 
             fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
                 let (s, modified) = Lcs::new(
@@ -24,7 +47,7 @@ macro_rules! collection_impl {
                     .diff(self.iter(), other.iter());
 
                 if modified {
-                    Edit::Change(s)
+                    Edit::Change(CollectionDiff(s))
                 } else {
                     Edit::Copy
                 }
@@ -56,7 +79,7 @@ collection_impl! { VecDeque : }
 macro_rules! set_impl {
     (($typ:ident, $key_constraint:ident) : $($constraint:ident),* ) => {
         impl<'a, T: Same + Diffable<'a> + $key_constraint $(+$constraint)* + 'a> Diffable<'a> for $typ<T> {
-            type Diff = Vec<collection::Edit<&'a T, T::Diff>>;
+            type Diff = CollectionDiff<collection::Edit<&'a T, T::Diff>>;
 
             fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
                 let (s, modified) = Lcs::new(
@@ -68,7 +91,7 @@ macro_rules! set_impl {
                     .diff_unordered(self.iter(), other.iter());
 
                 if modified {
-                    Edit::Change(s)
+                    Edit::Change(CollectionDiff(s))
                 } else {
                     Edit::Copy
                 }

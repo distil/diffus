@@ -6,6 +6,8 @@ use crate::{Diffable, Same};
 use serde::Serialize;
 
 
+pub(crate) type LcsResult<T> = std::collections::vec_deque::VecDeque<T>;
+
 macro_rules! lcs {
     ( : $($constraint:ident),* ) => {
         pub(crate) struct Lcs<T: Same + ?Sized> {
@@ -58,7 +60,7 @@ macro_rules! lcs {
                 mut i: usize,
                 mut j: usize,
             ) -> (
-                Vec<Edit<&'a T, <T as Diffable<'a>>::Diff>>,
+                LcsResult<Edit<&'a T, <T as Diffable<'a>>::Diff>>,
                 bool,
             )
             where
@@ -113,7 +115,7 @@ macro_rules! lcs {
                     },
                 );
 
-                (queue.into_iter().collect::<Vec<_>>(), modified)
+                (queue, modified)
             }
 
             /// Returns the iterator of changes along with a bool indicating if there were any `Insert`/ `Remove`.
@@ -122,7 +124,7 @@ macro_rules! lcs {
                 x: impl DoubleEndedIterator<Item = &'a T> + 'a,
                 y: impl DoubleEndedIterator<Item = &'a T> + 'a,
             ) -> (
-                Vec<Edit<&'a T, <T as Diffable<'a>>::Diff>>,
+                LcsResult<Edit<&'a T, <T as Diffable<'a>>::Diff>>,
                 bool,
             )
             where
@@ -144,7 +146,7 @@ macro_rules! lcs {
                 x: impl Iterator<Item = &'a T> + 'a,
                 y: impl Iterator<Item = &'a T> + 'a,
             ) -> (
-                Vec<Edit<&'a T, <T as Diffable<'a>>::Diff>>,
+                LcsResult<Edit<&'a T, <T as Diffable<'a>>::Diff>>,
                 bool,
             )
             where
