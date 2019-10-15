@@ -268,4 +268,37 @@ mod test {
             &(&13, &37)
         );
     }
+
+
+    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
+    #[derive(Diffus, Default)]
+    struct SB {
+        u: u32,
+    }
+
+    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
+    #[derive(Diffus, Default)]
+    struct SA {
+        b: SB,
+        s: String,
+    }
+
+    #[cfg(feature = "serialize-impl")]
+    #[test]
+    fn serialize_example_test() {
+        let left = &SA {
+            b: SB { u: 34 },
+            s: "string".to_string(),
+        };
+        assert_eq!(
+            serde_json::to_string(
+                &left.diff(&SA {
+                    b: SB { u: 34 },
+                    s: "strga".to_string(),
+                })
+            ).unwrap(),
+            "{\"b\":{\"u\":34},\"s\":\"string\"}"
+        );
+    }
+
 }

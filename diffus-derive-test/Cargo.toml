@@ -10,8 +10,9 @@ diffus = { path = "../diffus" }
 diffus-derive = { path = "../diffus-derive" }
 
 serde = { version = "1.0", features = [ "derive" ], optional = true }
+serde_json = { version = "1.0", optional = true }
 
 [features]
 default = []
 
-serialize-impl = [ "serde" ]
+serialize-impl = [ "serde", "serde_json" ]
