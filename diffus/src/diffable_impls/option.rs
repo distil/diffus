@@ -6,7 +6,6 @@ use crate::{
 #[cfg(feature = "serialize-impl")]
 use serde::Serialize;
 
-// FIXME verify is this constraint needed?
 macro_rules! option_impl_constraint {
     (: $($constraints:ident),*) => {
         impl<'a, T: Diffable<'a> $(+$constraints)? + 'a> Diffable<'a> for Option<T> {

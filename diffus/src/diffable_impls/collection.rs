@@ -34,7 +34,6 @@ impl<T> std::iter::Iterator for IntoIter<T> {
 macro_rules! collection_impl {
     ($typ:ident : $($constraint:ident),*) => {
         impl<'a, T: Same $(+$constraint)* + Diffable<'a> + 'a> Diffable<'a> for $typ<T> {
-            // FIXME check if possible to do more generic
             type Diff = CollectionDiff<collection::Edit<&'a T, T::Diff>>;
 
             fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
@@ -75,7 +74,6 @@ collection_impl! { Vec : }
 #[cfg(not(feature = "serialize-impl"))]
 collection_impl! { VecDeque : }
 
-// FIXME continue here
 macro_rules! set_impl {
     (($typ:ident, $key_constraint:ident) : $($constraint:ident),* ) => {
         impl<'a, T: Same + Diffable<'a> + $key_constraint $(+$constraint)* + 'a> Diffable<'a> for $typ<T> {
