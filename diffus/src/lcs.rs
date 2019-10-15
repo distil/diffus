@@ -1,4 +1,4 @@
-use super::edit::collection::Edit;
+use super::edit::collection;
 
 use crate::{Diffable, Same};
 
@@ -60,7 +60,7 @@ macro_rules! lcs {
                 mut i: usize,
                 mut j: usize,
             ) -> (
-                LcsResult<Edit<&'a T, <T as Diffable<'a>>::Diff>>,
+                LcsResult<collection::Edit<&'a T, <T as Diffable<'a>>::Diff>>,
                 bool,
             )
             where
@@ -87,19 +87,19 @@ macro_rules! lcs {
 
                         match (current_x, current_y) {
                             (Some(current_x), Some(current_y)) => match current_x.diff(&current_y) {
-                                crate::edit::Edit::Copy => Some((Edit::Copy(current_x), false)),
-                                crate::edit::Edit::Change(diff) => Some((Edit::Change(diff), true)),
+                                crate::edit::Edit::Copy => Some((collection::Edit::Copy(current_x), false)),
+                                crate::edit::Edit::Change(diff) => Some((collection::Edit::Change(diff), true)),
                             },
                             _ => unreachable!(),
                         }
                     } else if current_y.is_some() && (current_x.is_none() || left >= above) {
                         current_x.map(|c| x.put_back(c));
                         j = j - 1;
-                        current_y.map(|value| (Edit::Insert(value), true))
+                        current_y.map(|value| (collection::Edit::Insert(value), true))
                     } else if current_x.is_some() && (current_y.is_none() || left < above) {
                         current_y.map(|c| y.put_back(c));
                         i = i - 1;
-                        current_x.map(|value| (Edit::Remove(value), true))
+                        current_x.map(|value| (collection::Edit::Remove(value), true))
                     } else {
                         None
                     }
@@ -124,7 +124,7 @@ macro_rules! lcs {
                 x: impl DoubleEndedIterator<Item = &'a T> + 'a,
                 y: impl DoubleEndedIterator<Item = &'a T> + 'a,
             ) -> (
-                LcsResult<Edit<&'a T, <T as Diffable<'a>>::Diff>>,
+                LcsResult<collection::Edit<&'a T, <T as Diffable<'a>>::Diff>>,
                 bool,
             )
             where
@@ -146,7 +146,7 @@ macro_rules! lcs {
                 x: impl Iterator<Item = &'a T> + 'a,
                 y: impl Iterator<Item = &'a T> + 'a,
             ) -> (
-                LcsResult<Edit<&'a T, <T as Diffable<'a>>::Diff>>,
+                LcsResult<collection::Edit<&'a T, <T as Diffable<'a>>::Diff>>,
                 bool,
             )
             where
@@ -188,7 +188,7 @@ mod tests {
         )
         .diff(left_chars.iter(), right_chars.iter());
         assert!(modified);
-        use Edit::*;
+        use collection::Edit::*;
         assert_eq!(
             s.iter().collect::<Vec<_>>(),
             vec![
@@ -219,7 +219,7 @@ mod tests {
         )
         .diff(left.split_whitespace(), right.split_whitespace());
         assert!(modified);
-        use Edit::*;
+        use collection::Edit::*;
         assert_eq!(
             s.iter().collect::<Vec<_>>(),
             vec![
