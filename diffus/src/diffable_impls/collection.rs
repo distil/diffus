@@ -127,7 +127,7 @@ mod tests {
         let diff = left.diff(&right);
         if let Edit::Change(diff) = diff {
             assert_eq!(
-                diff.collect::<Vec<_>>(),
+                diff.into_iter().collect::<Vec<_>>(),
                 vec![
                     Remove(&b'X'),
                     Copy(&b'M'),

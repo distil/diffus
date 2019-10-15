@@ -173,7 +173,6 @@ lcs!{ : }
 mod tests {
     use super::*;
 
-    /* FIXME readd
     #[test]
     fn characters() {
         let left = "XMJYAUZ";
@@ -191,18 +190,18 @@ mod tests {
         assert!(modified);
         use Edit::*;
         assert_eq!(
-            s.collect::<Vec<_>>(),
+            s.iter().collect::<Vec<_>>(),
             vec![
-                Remove(&'X'),
-                Copy(&'M'),
-                Insert(&'Z'),
-                Copy(&'J'),
-                Remove(&'Y'),
-                Copy(&'A'),
-                Insert(&'W'),
-                Insert(&'X'),
-                Copy(&'U'),
-                Remove(&'Z')
+                &Remove(&'X'),
+                &Copy(&'M'),
+                &Insert(&'Z'),
+                &Copy(&'J'),
+                &Remove(&'Y'),
+                &Copy(&'A'),
+                &Insert(&'W'),
+                &Insert(&'X'),
+                &Copy(&'U'),
+                &Remove(&'Z')
             ]
         );
     }
@@ -222,23 +221,21 @@ mod tests {
         assert!(modified);
         use Edit::*;
         assert_eq!(
-            s.collect::<Vec<_>>(),
+            s.iter().collect::<Vec<_>>(),
             vec![
-                Copy("The"),
-                Copy("quick"),
-                Copy("brown"),
-                Remove("fox"),
-                Remove("jumps"),
-                Insert("dog"),
-                Insert("leaps"),
-                Copy("over"),
-                Copy("the"),
-                Copy("lazy"),
-                Remove("dog"),
-                Insert("cat")
+                &Copy("The"),
+                &Copy("quick"),
+                &Copy("brown"),
+                &Remove("fox"),
+                &Remove("jumps"),
+                &Insert("dog"),
+                &Insert("leaps"),
+                &Copy("over"),
+                &Copy("the"),
+                &Copy("lazy"),
+                &Remove("dog"),
+                &Insert("cat")
             ]
         );
     }
-    */
 }
-

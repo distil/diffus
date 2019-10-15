@@ -48,7 +48,7 @@ mod test {
         use diffus::edit::{self, collection};
 
         if let edit::Edit::Change(diff) = diff {
-            let diff = diff.collect::<Vec<_>>();
+            let diff = diff.into_iter().collect::<Vec<_>>();
 
             if let (
                 &collection::Edit::Change(EditedIdentified { id: edit::Edit::Copy, value: edit::Edit::Change((&0, &1)) }),

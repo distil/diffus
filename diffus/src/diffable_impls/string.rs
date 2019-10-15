@@ -4,7 +4,7 @@ use crate::{
     Diffable,
 };
 
-/* FIXME
+
 impl<'a> Diffable<'a> for str {
     type Diff = Vec<collection::Edit<char, (char, char)>>;
 
@@ -17,17 +17,22 @@ impl<'a> Diffable<'a> for str {
             self_chars.len(),
             other_chars.len(),
         )
-        .diff(self_chars.iter(), other_chars.iter());
+        .diff(
+            self_chars.iter(),
+            other_chars.iter(),
+        );
 
-        let s = s.iter()
-            .map(|edit| match edit {
-                collection::Edit::Remove(ch) => collection::Edit::Remove(*ch),
-                collection::Edit::Insert(ch) => collection::Edit::Insert(*ch),
-                collection::Edit::Copy(ch) => collection::Edit::Copy(*ch),
-                collection::Edit::Change((left, right)) => {
-                    collection::Edit::Change((*left, *right))
-                }
-            })
+        let s = {
+            use collection::Edit::*;
+
+            s.iter()
+                .map(|edit| match edit {
+                    Remove(ch) => Remove(**ch),
+                    Insert(ch) => Insert(**ch),
+                    Copy(ch) => Copy(**ch),
+                    Change((left, right)) => Change((**left, **right)),
+                })
+        }
             .collect();
         if modified {
             Edit::Change(s)
@@ -79,5 +84,3 @@ mod tests {
         }
     }
 }
-
-*/
