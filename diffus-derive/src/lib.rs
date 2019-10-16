@@ -130,7 +130,6 @@ fn input_lifetime(generics: &syn::Generics) -> Option<&syn::Lifetime> {
     lifetime
 }
 
-
 #[proc_macro_derive(Diffus)]
 pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input: syn::DeriveInput = syn::parse2(proc_macro2::TokenStream::from(input)).unwrap();
@@ -255,6 +254,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             });
 
             quote! {
+                #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
                 #vis enum #edited_ident <#unit_enum_impl_lifetime> where #where_clause {
                     #(#edit_variants),*
                 }
@@ -282,6 +282,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             match fields {
                 syn::Fields::Named(_) => {
                     quote! {
+                        #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
                         #vis struct #edited_ident<#impl_lifetime> where #where_clause {
                             #edit_fields
                         }
@@ -302,6 +303,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
                 syn::Fields::Unnamed(_) => {
                     quote! {
+                        #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
                         #vis struct #edited_ident<#impl_lifetime> ( #edit_fields ) where #where_clause;
 
                         impl<#impl_lifetime> diffus::Diffable<#impl_lifetime> for #ident <#data_lifetime> where #where_clause {
@@ -320,6 +322,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
                 syn::Fields::Unit => {
                     quote! {
+                        #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
                         #vis struct #edited_ident< > where #where_clause;
 
                         impl<#impl_lifetime> diffus::Diffable<#impl_lifetime> for #ident< > where #where_clause {

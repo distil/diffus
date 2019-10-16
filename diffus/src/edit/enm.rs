@@ -1,4 +1,4 @@
-// TODO figure out the reason why it's not Edit<T> { .., AssociatedChanged(T::D) }
+#[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
 #[derive(Debug, PartialEq)]
 pub enum Edit<'a, T, D> {
     Copy,

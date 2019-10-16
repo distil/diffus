@@ -7,7 +7,7 @@ mod test {
     use diffus::{self, Diffable};
 
     #[derive(Diffus)]
-    struct A<'a>(&'a u32);
+    struct Lifetime<'a>(&'a u32);
 
     #[derive(Diffus, Debug, PartialEq)]
     struct Identified {
@@ -46,14 +46,18 @@ mod test {
         use diffus::edit::{self, collection};
 
         if let edit::Edit::Change(diff) = diff {
-            let diff = diff.collect::<Vec<_>>();
+            let diff = diff.into_iter().collect::<Vec<_>>();
 
             if let (
-                &collection::Edit::Change(EditedIdentified { id: edit::Edit::Copy, value: edit::Edit::Change((&0, &1)) }),
+                &collection::Edit::Change(EditedIdentified {
+                    id: edit::Edit::Copy,
+                    value: edit::Edit::Change((&0, &1)),
+                }),
                 &collection::Edit::Remove(&Identified { id: 3, value: 0 }),
                 &collection::Edit::Copy(&Identified { id: 4, value: 0 }),
                 &collection::Edit::Insert(&Identified { id: 3, value: 0 }),
-            ) = (&diff[1], &diff[2], &diff[3], &diff[4]) {
+            ) = (&diff[1], &diff[2], &diff[3], &diff[4])
+            {
             } else {
                 unreachable!()
             }
@@ -67,6 +71,7 @@ mod test {
         T { test: Test },
     }
 
+    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Debug, Diffus, PartialEq, Eq)]
     enum Test {
         A,
@@ -79,6 +84,7 @@ mod test {
     /*
      * Verify enum refering to own type via hashmap
      */
+    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Debug, Diffus, PartialEq)]
     enum RecursiveHashMap {
         Node(std::collections::HashMap<u32, RecursiveHashMap>),
@@ -253,5 +259,49 @@ mod test {
                 .unwrap(),
             &(&13, &37)
         );
+    }
+
+    #[cfg(feature = "serialize-impl")]
+    mod serialize {
+        use super::*;
+
+        #[derive(Diffus, Default, serde::Serialize)]
+        struct SB {
+            u: u32,
+        }
+
+        #[derive(Diffus, Default, serde::Serialize)]
+        struct SA {
+            b: SB,
+            s: String,
+        }
+
+        #[test]
+        fn example_test() {
+            use serde_json::*;
+
+            let left = &SA {
+                b: SB { u: 34 },
+                s: "string".to_string(),
+            };
+
+            let string = to_string(&left.diff(&SA {
+                b: SB { u: 34 },
+                s: "strga".to_string(),
+            }))
+            .unwrap();
+
+            let json: Value = from_str(&string).unwrap();
+
+            assert_eq!(
+                json["Change"]["b"],
+                Value::String("Copy".to_string())
+            );
+
+            assert_eq!(
+                json["Change"]["s"]["Change"][0]["Copy"],
+                Value::String("s".to_string())
+            );
+        }
     }
 }

@@ -2,6 +2,7 @@ pub mod collection;
 pub mod enm;
 pub mod map;
 
+#[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
 #[derive(Debug, PartialEq)]
 pub enum Edit<Diff> {
     Copy,
