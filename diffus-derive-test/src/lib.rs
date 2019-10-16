@@ -6,11 +6,9 @@ mod test {
 
     use diffus::{self, Diffable};
 
-    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus)]
-    struct A<'a>(&'a u32);
+    struct Lifetime<'a>(&'a u32);
 
-    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus, Debug, PartialEq)]
     struct Identified {
         id: u32,
@@ -68,7 +66,6 @@ mod test {
         }
     }
 
-    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus)]
     enum NestedTest {
         T { test: Test },
@@ -97,7 +94,6 @@ mod test {
     /*
      * Verify enums with only Unit variants.
      */
-    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus)]
     enum EnumNoLifetimeParameter {
         A,
@@ -110,21 +106,17 @@ mod test {
          */
         use diffus_derive::Diffus;
 
-        #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
         #[derive(Diffus)]
         pub struct VisTestStructUnit;
 
-        #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
         #[derive(Diffus)]
         pub struct VisTestStructTuple(u32);
 
-        #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
         #[derive(Diffus)]
         pub struct VisTestStruct {
             x: u32,
         }
 
-        #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
         #[derive(Diffus)]
         pub enum VisTestEnum {
             A,
@@ -219,22 +211,18 @@ mod test {
         }
     }
 
-    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus, Debug, PartialEq)]
     struct Inner {
         x: String,
         y: u32,
     }
 
-    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus, Debug, PartialEq)]
     struct Unit;
 
-    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus, Debug, PartialEq)]
     struct Unnamed(u32, String);
 
-    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus, Debug, PartialEq)]
     struct Outer {
         inner: Inner,
@@ -273,46 +261,47 @@ mod test {
         );
     }
 
-    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
-    #[derive(Diffus, Default)]
-    struct SB {
-        u: u32,
-    }
-
-    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
-    #[derive(Diffus, Default)]
-    struct SA {
-        b: SB,
-        s: String,
-    }
-
     #[cfg(feature = "serialize-impl")]
-    #[test]
-    fn serialize_example_test() {
-        use serde_json::*;
+    mod serialize {
+        use super::*;
 
-        let left = &SA {
-            b: SB { u: 34 },
-            s: "string".to_string(),
-        };
+        #[derive(Diffus, Default, serde::Serialize)]
+        struct SB {
+            u: u32,
+        }
 
-        let string = to_string(&left.diff(&SA {
-            b: SB { u: 34 },
-            s: "strga".to_string(),
-        }))
-        .unwrap();
+        #[derive(Diffus, Default, serde::Serialize)]
+        struct SA {
+            b: SB,
+            s: String,
+        }
 
-        let json: Value = from_str(&string).unwrap();
+        #[test]
+        fn example_test() {
+            use serde_json::*;
 
-        assert_eq!(
-            json["Change"]["b"],
-            Value::String("Copy".to_string()) // FIXME issue #50
-        );
+            let left = &SA {
+                b: SB { u: 34 },
+                s: "string".to_string(),
+            };
 
-        assert_eq!(
-            json["Change"]["s"]["Change"][0]["Copy"],
-            Value::String("s".to_string())
-        );
+            let string = to_string(&left.diff(&SA {
+                b: SB { u: 34 },
+                s: "strga".to_string(),
+            }))
+            .unwrap();
+
+            let json: Value = from_str(&string).unwrap();
+
+            assert_eq!(
+                json["Change"]["b"],
+                Value::String("Copy".to_string())
+            );
+
+            assert_eq!(
+                json["Change"]["s"]["Change"][0]["Copy"],
+                Value::String("s".to_string())
+            );
+        }
     }
-
 }
