@@ -22,12 +22,15 @@ impl<'a> Diffable<'a> for str {
         // TODO: intermediates. The conversion is done here but ideally should never need to
         // TODO: be done at all
         let s = s
-            .map(|edit| match edit {
-                collection::Edit::Remove(ch) => collection::Edit::Remove(*ch),
-                collection::Edit::Insert(ch) => collection::Edit::Insert(*ch),
-                collection::Edit::Copy(ch) => collection::Edit::Copy(*ch),
-                collection::Edit::Change((left, right)) => {
-                    collection::Edit::Change((*left, *right))
+            .into_iter()
+            .map(|edit| {
+                use collection::Edit::*;
+
+                match edit {
+                    Remove(ch) => Remove(*ch),
+                    Insert(ch) => Insert(*ch),
+                    Copy(ch) => Copy(*ch),
+                    Change((left, right)) => Change((*left, *right)),
                 }
             })
             .collect();
