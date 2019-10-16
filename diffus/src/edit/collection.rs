@@ -1,5 +1,9 @@
 use crate::Same;
 
+#[cfg(feature = "serialize-impl")]
+use serde::Serialize;
+
+#[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
 #[derive(Debug, PartialEq, Eq)]
 pub enum Edit<T, D> {
     Copy(T),

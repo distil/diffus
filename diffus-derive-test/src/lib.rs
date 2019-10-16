@@ -286,21 +286,31 @@ mod test {
     #[cfg(feature = "serialize-impl")]
     #[test]
     fn serialize_example_test() {
+        use serde_json::*;
+
         let left = &SA {
             b: SB { u: 34 },
             s: "string".to_string(),
         };
-        /* FIXME readd
+
+        let string = to_string(
+            &left.diff(&SA {
+                b: SB { u: 34 },
+                s: "strga".to_string(),
+            })
+        ).unwrap();
+
+        let json: Value = from_str(&string).unwrap();
+
         assert_eq!(
-            serde_json::to_string(
-                &left.diff(&SA {
-                    b: SB { u: 34 },
-                    s: "strga".to_string(),
-                })
-            ).unwrap(),
-            "{\"b\":{\"u\":34},\"s\":\"string\"}"
+            json["Change"]["b"],
+            Value::String("Copy".to_string()) // FIXME issue #50
         );
-        */
+
+        assert_eq!(
+            json["Change"]["s"]["Change"][0]["Copy"],
+            Value::String("s".to_string())
+        );
     }
 
 }

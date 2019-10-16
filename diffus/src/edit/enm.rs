@@ -1,5 +1,9 @@
-// TODO figure out the reason why it's not Edit<T> { .., AssociatedChanged(T::D) }
+#[cfg(feature = "serialize-impl")]
+use serde::Serialize;
+
+#[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
 #[derive(Debug, PartialEq)]
+// TODO figure out the reason why it's not Edit<T> { .., AssociatedChanged(T::D) }
 pub enum Edit<'a, T, D> {
     Copy,
     VariantChanged(&'a T, &'a T),
