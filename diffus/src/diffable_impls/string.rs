@@ -1,10 +1,13 @@
-use crate::{edit::{collection, Edit}, lcs::Lcs, Diffable};
+use crate::{
+    edit::{collection, Edit},
+    lcs::Lcs,
+    Diffable,
+};
 
 impl<'a> Diffable<'a> for str {
-    type D = Vec<collection::Edit<char, (char, char)>>;
-    type Target = Self;
+    type Diff = Vec<collection::Edit<char, (char, char)>>;
 
-    fn diff(&'a self, other: &'a Self) -> Edit<'a, Self::Target> {
+    fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
         let self_chars = self.chars().collect::<Vec<_>>();
         let other_chars = other.chars().collect::<Vec<_>>();
         let (s, modified) = Lcs::new(
@@ -13,7 +16,7 @@ impl<'a> Diffable<'a> for str {
             self_chars.len(),
             other_chars.len(),
         )
-            .diff(self_chars.iter(), other_chars.iter());
+        .diff(self_chars.iter(), other_chars.iter());
 
         // TODO: The above Lcs only handles iterators to references, but characters are
         // TODO: intermediates. The conversion is done here but ideally should never need to
@@ -23,7 +26,9 @@ impl<'a> Diffable<'a> for str {
                 collection::Edit::Remove(ch) => collection::Edit::Remove(*ch),
                 collection::Edit::Insert(ch) => collection::Edit::Insert(*ch),
                 collection::Edit::Copy(ch) => collection::Edit::Copy(*ch),
-                collection::Edit::Change((left, right)) => collection::Edit::Change((*left, *right)),
+                collection::Edit::Change((left, right)) => {
+                    collection::Edit::Change((*left, *right))
+                }
             })
             .collect();
         if modified {
@@ -35,10 +40,9 @@ impl<'a> Diffable<'a> for str {
 }
 
 impl<'a> Diffable<'a> for String {
-    type D = <str as Diffable<'a>>::D;
-    type Target = str;
+    type Diff = <str as Diffable<'a>>::Diff;
 
-    fn diff(&'a self, other: &'a Self) -> Edit<'a, Self::Target> {
+    fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
         self.as_str().diff(other.as_str())
     }
 }

@@ -1,13 +1,12 @@
 pub mod diffable_impls;
 pub mod edit;
-pub mod same;
 mod lcs;
+pub mod same;
 
 pub trait Diffable<'a> {
-    type D: Sized + 'a;
-    type Target: Diffable<'a> + ?Sized + 'a;
+    type Diff: 'a;
 
-    fn diff(&'a self, other: &'a Self) -> edit::Edit<'a, Self::Target>;
+    fn diff(&'a self, other: &'a Self) -> edit::Edit<Self::Diff>;
 }
 
 pub trait Same {

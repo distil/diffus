@@ -1,14 +1,12 @@
-use super::super::Diffable;
-
 #[derive(Debug, PartialEq)]
-pub enum Edit<'a, T: Diffable<'a> + ?Sized> {
+pub enum Edit<'a, T: crate::Diffable<'a> + ?Sized> {
     Insert(&'a T),
     Remove,
     Copy,
-    Change(T::D),
+    Change(T::Diff),
 }
 
-impl<'a, T: Diffable<'a> + ?Sized> Edit<'a, T> {
+impl<'a, T: crate::Diffable<'a> + ?Sized> Edit<'a, T> {
     //
     // Checks if the edit is an insert.
     //
@@ -53,7 +51,7 @@ impl<'a, T: Diffable<'a> + ?Sized> Edit<'a, T> {
             None
         }
     }
-    pub fn change(&self) -> Option<&T::D> {
+    pub fn change(&self) -> Option<&T::Diff> {
         if let Self::Change(value_diff) = self {
             Some(value_diff)
         } else {

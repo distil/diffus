@@ -2,14 +2,12 @@
 #[allow(unused_variables)]
 #[allow(dead_code)]
 mod test {
-    use diffus_derive::{
-        Diffus,
-    };
+    use diffus_derive::Diffus;
 
-    use diffus::{
-        self,
-        Diffable,
-    };
+    use diffus::{self, Diffable};
+
+    #[derive(Diffus)]
+    struct A<'a>(&'a u32);
 
     #[derive(Diffus, Debug, PartialEq)]
     struct Identified {
@@ -45,8 +43,7 @@ mod test {
 
         let diff = left.diff(&right);
 
-        use diffus::edit::collection;
-        use diffus::edit;
+        use diffus::edit::{self, collection};
 
         if let edit::Edit::Change(diff) = diff {
             let diff = diff.collect::<Vec<_>>();
@@ -60,7 +57,6 @@ mod test {
             } else {
                 unreachable!()
             }
-
         } else {
             unreachable!()
         }
@@ -81,7 +77,7 @@ mod test {
     }
 
     /*
-     * Verify enum refering to own type via hashmap 
+     * Verify enum refering to own type via hashmap
      */
     #[derive(Debug, Diffus, PartialEq)]
     enum RecursiveHashMap {
@@ -111,7 +107,9 @@ mod test {
         pub struct VisTestStructTuple(u32);
 
         #[derive(Diffus)]
-        pub struct VisTestStruct { x: u32 }
+        pub struct VisTestStruct {
+            x: u32,
+        }
 
         #[derive(Diffus)]
         pub enum VisTestEnum {
@@ -132,13 +130,14 @@ mod test {
 
         let diff = left.diff(&right);
 
-        if let diffus::edit::enm::Edit::AssociatedChanged(EditedNestedTest::T { test }) = diff.change().unwrap() {
-            if let diffus::edit::enm::Edit::AssociatedChanged(EditedTest::C { x }) = test.change().unwrap() {
-                assert_eq!(
-                    x.change(),
-                    Some(&(&32, &43))
-                );
-            }else {
+        if let diffus::edit::enm::Edit::AssociatedChanged(EditedNestedTest::T { test }) =
+            diff.change().unwrap()
+        {
+            if let diffus::edit::enm::Edit::AssociatedChanged(EditedTest::C { x }) =
+                test.change().unwrap()
+            {
+                assert_eq!(x.change(), Some(&(&32, &43)));
+            } else {
                 unreachable!();
             }
         } else {
@@ -148,14 +147,8 @@ mod test {
 
     #[test]
     fn enm_associated_not_change_tuple_variant() {
-        let left = Test::Bd(
-            "Bilbo Baggins".to_owned(),
-            42,
-        );
-        let right = Test::Bd(
-            "Bilbo Baggins".to_owned(),
-            42,
-        );
+        let left = Test::Bd("Bilbo Baggins".to_owned(), 42);
+        let right = Test::Bd("Bilbo Baggins".to_owned(), 42);
 
         assert!(left.diff(&right).is_copy());
     }
@@ -184,7 +177,10 @@ mod test {
             x: 42,
             y: "Frodo Baggins".to_owned(),
         };
-        if let diffus::edit::Edit::Change(diffus::edit::enm::Edit::AssociatedChanged(EditedTest::Cd { x, y })) = left.diff(&right) {
+        if let diffus::edit::Edit::Change(diffus::edit::enm::Edit::AssociatedChanged(
+            EditedTest::Cd { x, y },
+        )) = left.diff(&right)
+        {
             assert!(x.is_copy());
             assert!(y.is_change());
         } else {
@@ -199,7 +195,9 @@ mod test {
             y: "Bilbo Baggins".to_owned(),
         };
         let right = Test::B("Frodo Baggins".to_owned());
-        if let diffus::edit::Edit::Change(diffus::edit::enm::Edit::VariantChanged(l, r)) = left.diff(&right) {
+        if let diffus::edit::Edit::Change(diffus::edit::enm::Edit::VariantChanged(l, r)) =
+            left.diff(&right)
+        {
             assert_eq!(&left, l);
             assert_eq!(&right, r);
         } else {
@@ -245,11 +243,15 @@ mod test {
         let diff = left.diff(&right);
 
         assert_eq!(
-            diff.change().unwrap()
-                .inner.change().unwrap()
-                .y.change().unwrap(),
+            diff.change()
+                .unwrap()
+                .inner
+                .change()
+                .unwrap()
+                .y
+                .change()
+                .unwrap(),
             &(&13, &37)
         );
-
     }
 }
