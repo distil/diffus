@@ -4,11 +4,32 @@ use crate::{
     Diffable, Same,
 };
 
+pub struct CollectionDiff<T>(crate::lcs::LcsResult<T>);
+
+pub struct IntoIter<T>(<crate::lcs::LcsResult<T> as std::iter::IntoIterator>::IntoIter);
+
+impl<T> std::iter::IntoIterator for CollectionDiff<T> {
+    type Item = T;
+    type IntoIter = IntoIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter(self.0.into_iter())
+    }
+}
+
+impl<T> std::iter::Iterator for IntoIter<T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
+    }
+}
+
 macro_rules! collection_impl {
     ($($typ:ident),*) => {
         $(
             impl<'a, T: Same + Diffable<'a> + 'a> Diffable<'a> for $typ<T> {
-                type Diff = std::collections::vec_deque::IntoIter<collection::Edit<&'a T, T::Diff>>;
+                type Diff = CollectionDiff<collection::Edit<&'a T, T::Diff>>;
 
                 fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
                     let (s, modified) = Lcs::new(
@@ -20,7 +41,7 @@ macro_rules! collection_impl {
                         .diff(self.iter(), other.iter());
 
                     if modified {
-                        Edit::Change(s)
+                        Edit::Change(CollectionDiff(s))
                     } else {
                         Edit::Copy
                     }
@@ -39,7 +60,7 @@ macro_rules! set_impl {
     ($(($typ:ident, $key_constraint:ident)),*) => {
         $(
             impl<'a, T: Same + Diffable<'a> + $key_constraint + 'a> Diffable<'a> for $typ<T> {
-                type Diff = std::collections::vec_deque::IntoIter<collection::Edit<&'a T, T::Diff>>;
+                type Diff = CollectionDiff<collection::Edit<&'a T, T::Diff>>;
 
                 fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
                     let (s, modified) = Lcs::new(
@@ -51,7 +72,7 @@ macro_rules! set_impl {
                         .diff_unordered(self.iter(), other.iter());
 
                     if modified {
-                        Edit::Change(s)
+                        Edit::Change(CollectionDiff(s))
                     } else {
                         Edit::Copy
                     }
@@ -84,7 +105,7 @@ mod tests {
         let diff = left.diff(&right);
         if let Edit::Change(diff) = diff {
             assert_eq!(
-                diff.collect::<Vec<_>>(),
+                diff.into_iter().collect::<Vec<_>>(),
                 vec![
                     Remove(&b'X'),
                     Copy(&b'M'),

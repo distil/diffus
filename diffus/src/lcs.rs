@@ -10,6 +10,8 @@ pub(crate) struct Lcs<T: Same + ?Sized> {
     marker: std::marker::PhantomData<T>,
 }
 
+pub(crate) type LcsResult<T> = std::collections::vec_deque::VecDeque<T>;
+
 impl<'a, T: Same + Diffable<'a> + ?Sized + 'a> Lcs<T> {
     pub(crate) fn new<I: Iterator<Item = &'a T>>(
         x: impl Iterator<Item = &'a T>,
@@ -52,10 +54,7 @@ impl<'a, T: Same + Diffable<'a> + ?Sized + 'a> Lcs<T> {
         mut y: itertools::PutBack<impl Iterator<Item = &'a T>>,
         mut i: usize,
         mut j: usize,
-    ) -> (
-        std::collections::vec_deque::IntoIter<Edit<&'a T, <T as Diffable<'a>>::Diff>>,
-        bool,
-    )
+    ) -> (LcsResult<Edit<&'a T, <T as Diffable<'a>>::Diff>>, bool)
     where
         T: 'a,
     {
@@ -108,7 +107,7 @@ impl<'a, T: Same + Diffable<'a> + ?Sized + 'a> Lcs<T> {
             },
         );
 
-        (queue.into_iter(), modified)
+        (queue, modified)
     }
 
     /// Returns the iterator of changes along with a bool indicating if there were any `Insert`/ `Remove`.
@@ -116,10 +115,7 @@ impl<'a, T: Same + Diffable<'a> + ?Sized + 'a> Lcs<T> {
         &self,
         x: impl DoubleEndedIterator<Item = &'a T> + 'a,
         y: impl DoubleEndedIterator<Item = &'a T> + 'a,
-    ) -> (
-        std::collections::vec_deque::IntoIter<Edit<&'a T, <T as Diffable<'a>>::Diff>>,
-        bool,
-    )
+    ) -> (LcsResult<Edit<&'a T, <T as Diffable<'a>>::Diff>>, bool)
     where
         T: 'a,
     {
@@ -138,10 +134,7 @@ impl<'a, T: Same + Diffable<'a> + ?Sized + 'a> Lcs<T> {
         &self,
         x: impl Iterator<Item = &'a T> + 'a,
         y: impl Iterator<Item = &'a T> + 'a,
-    ) -> (
-        std::collections::vec_deque::IntoIter<Edit<&'a T, <T as Diffable<'a>>::Diff>>,
-        bool,
-    )
+    ) -> (LcsResult<Edit<&'a T, <T as Diffable<'a>>::Diff>>, bool)
     where
         T: 'a,
     {
@@ -175,7 +168,7 @@ mod tests {
         assert!(modified);
         use Edit::*;
         assert_eq!(
-            s.collect::<Vec<_>>(),
+            s.into_iter().collect::<Vec<_>>(),
             vec![
                 Remove(&'X'),
                 Copy(&'M'),
@@ -206,7 +199,7 @@ mod tests {
         assert!(modified);
         use Edit::*;
         assert_eq!(
-            s.collect::<Vec<_>>(),
+            s.into_iter().collect::<Vec<_>>(),
             vec![
                 Copy("The"),
                 Copy("quick"),
