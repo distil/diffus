@@ -130,7 +130,6 @@ fn input_lifetime(generics: &syn::Generics) -> Option<&syn::Lifetime> {
     lifetime
 }
 
-
 #[proc_macro_derive(Diffus)]
 pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input: syn::DeriveInput = syn::parse2(proc_macro2::TokenStream::from(input)).unwrap();

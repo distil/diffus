@@ -51,11 +51,15 @@ mod test {
             let diff = diff.into_iter().collect::<Vec<_>>();
 
             if let (
-                &collection::Edit::Change(EditedIdentified { id: edit::Edit::Copy, value: edit::Edit::Change((&0, &1)) }),
+                &collection::Edit::Change(EditedIdentified {
+                    id: edit::Edit::Copy,
+                    value: edit::Edit::Change((&0, &1)),
+                }),
                 &collection::Edit::Remove(&Identified { id: 3, value: 0 }),
                 &collection::Edit::Copy(&Identified { id: 4, value: 0 }),
                 &collection::Edit::Insert(&Identified { id: 3, value: 0 }),
-            ) = (&diff[1], &diff[2], &diff[3], &diff[4]) {
+            ) = (&diff[1], &diff[2], &diff[3], &diff[4])
+            {
             } else {
                 unreachable!()
             }
@@ -269,7 +273,6 @@ mod test {
         );
     }
 
-
     #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus, Default)]
     struct SB {
@@ -293,12 +296,11 @@ mod test {
             s: "string".to_string(),
         };
 
-        let string = to_string(
-            &left.diff(&SA {
-                b: SB { u: 34 },
-                s: "strga".to_string(),
-            })
-        ).unwrap();
+        let string = to_string(&left.diff(&SA {
+            b: SB { u: 34 },
+            s: "strga".to_string(),
+        }))
+        .unwrap();
 
         let json: Value = from_str(&string).unwrap();
 
