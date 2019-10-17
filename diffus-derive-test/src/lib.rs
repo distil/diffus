@@ -4,7 +4,32 @@
 mod test {
     use diffus_derive::Diffus;
 
-    use diffus::{self, Diffable};
+    use diffus::{self, edit, Diffable};
+
+    mod hide {
+        use super::*;
+
+        #[derive(Diffus)]
+        pub struct Inside {
+            pub p: u32,
+        }
+
+        impl Inside {
+            pub fn new(p: u32) -> Self {
+                Inside { p }
+            }
+        }
+
+    }
+
+    #[test]
+    fn vis_check() {
+        if let edit::Edit::Change(hide::EditedInside { p: edit::Edit::Change(diff), .. }) = hide::Inside::new(0).diff(&hide::Inside::new(1)) {
+            assert_eq!(diff, (&0, &1));
+        } else {
+            unreachable!()
+        }
+    }
 
     #[derive(Diffus)]
     struct Lifetime<'a>(&'a u32);
@@ -293,10 +318,7 @@ mod test {
 
             let json: Value = from_str(&string).unwrap();
 
-            assert_eq!(
-                json["Change"]["b"],
-                Value::String("Copy".to_string())
-            );
+            assert_eq!(json["Change"]["b"], Value::String("Copy".to_string()));
 
             assert_eq!(
                 json["Change"]["s"]["Change"][0]["Copy"],

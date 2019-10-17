@@ -9,14 +9,18 @@ fn edit_fields(fields: &syn::Fields, lifetime: &syn::Lifetime) -> Output {
         syn::Field {
             ident: Some(ident),
             ty,
+            vis,
             ..
         } => quote! {
-            #ident: diffus::edit::Edit<<#ty as diffus::Diffable<#lifetime>>::Diff>
+            #vis #ident: diffus::edit::Edit<<#ty as diffus::Diffable<#lifetime>>::Diff>
         },
         syn::Field {
-            ident: None, ty, ..
+            ident: None,
+            ty,
+            vis,
+            ..
         } => quote! {
-            diffus::edit::Edit<<#ty as diffus::Diffable<#lifetime>>::Diff>
+            #vis diffus::edit::Edit<<#ty as diffus::Diffable<#lifetime>>::Diff>
         },
     });
 
