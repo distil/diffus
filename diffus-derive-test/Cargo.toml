@@ -5,6 +5,15 @@ authors = [
     "Jim Holmström <jim.holmstroem@gmail.com>",
     "Johan Gardell <736172+gardell@users.noreply.github.com>",
 ]
+
+description = "Tests to verify that derive(diffus) works as expected"
+
+homepage = "https://github.com/distil/diffus"
+
+publish = false
+
+license = "Apache-2.0"
+
 edition = "2018"
 
 

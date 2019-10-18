@@ -5,7 +5,27 @@ authors = [
     "Jim Holmström <jim.holmstroem@gmail.com>",
     "Johan Gardell <736172+gardell@users.noreply.github.com>",
 ]
+
+description = "Finds the difference between two instances of any data structure. Supports: collections, Strings, Maps etc. Uses LCS where applicable. Also supports derive via `diffus-derive`."
+
+homepage = "https://github.com/distil/diffus"
+repository = "https://github.com/distil/diffus"
+documentation = "https://docs.rs/diffus"
+
+readme = "../README.md"
+
+keywords = [ "algorithm", "diff", "difference", "data", "data-structure" ]
+categories = [ "Algorithms", "Data Structures" ]
+publish = [ "crates.io" ]
+
+license = "Apache-2.0"
+
 edition = "2018"
+
+
+[lib]
+name = "diffus"
+path = "src/lib.rs"
 
 
 [dependencies]
