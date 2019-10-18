@@ -1,5 +1,5 @@
 # Diffus
-Get the difference between two things.
+Finds the difference between two instances of any data structure.
 
 ## Diffus in action
 ```rust
