@@ -16,7 +16,7 @@ readme = "../README.md"
 
 keywords = [ "algorithm", "diff", "difference", "data", "data-structure" ]
 categories = [ "Algorithms", "Data Structures" ]
-publish = [ "crates.io" ]
+publish = [ "crates-io" ]
 
 license = "Apache-2.0"
 
