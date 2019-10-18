@@ -15,7 +15,7 @@ documentation = "https://docs.rs/diffus-derive"
 readme = "../README.md"
 
 keywords = [ "algorithm", "diff", "difference", "data", "data-structure" ]
-categories = [ "Algorithms", "Data Structures" ]
+categories = [ "algorithms", "data-structures" ]
 publish = [ "crates-io" ]
 
 license = "Apache-2.0"
