@@ -1,7 +1,10 @@
 [package]
 name = "diffus-derive-test"
 version = "0.1.0"
-authors = ["Jim Holmström <jim.holmstroem@gmail.com>"]
+authors = [
+    "Jim Holmström <jim.holmstroem@gmail.com>",
+    "Johan Gardell <736172+gardell@users.noreply.github.com>",
+]
 edition = "2018"
 
 
