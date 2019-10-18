@@ -11,7 +11,7 @@ cargo_publish () {
         echo "Files added:"
         cargo package --list
 
-        read -r -p "Looks good to publish to crates.io?" response
+        read -r -p "Looks good to publish to crates.io? " response
         case "$response" in
             [yY][eE][sS]|[yY])
                 cargo publish
@@ -40,12 +40,12 @@ cargo_publish () {
 
     find . -iname Cargo.toml \
         -not -path "./target/*" \
-        -exec sed -i 's/version = .*/version = "'"${VERSION}"'"/g' '{}' \; \
+        -exec sed -i 's/^version = .*$/version = "'"${VERSION}"'"/g' '{}' \; \
         -exec git add '{}' \;
 
     git diff
 
-    read -r -p "Deploying ${VERSION}, are you sure? [y/N]?" response
+    read -r -p "Deploying ${VERSION}, are you sure? [y/N]? " response
     case "$response" in
         [yY][eE][sS]|[yY])
             git commit -m"Version ${VERSION}"
