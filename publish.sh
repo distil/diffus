@@ -28,8 +28,8 @@ cargo_publish () {
 
 ( cd "$( dirname "${BASH_SOURCE[0]}" )"
     git fetch
-    # FIXME test -z "$(git status --porcelain)" || (echo "dirty repo"; exit 5)
-    # FIXME test -z "$(git diff origin/master)" || (echo "not up to date with origin/master"; exit 6)
+    test -z "$(git status --porcelain)" || (echo "Dirty repo"; exit 5)
+    test -z "$(git diff origin/master)" || (echo "Not up to date with origin/master"; exit 6)
     ./test.sh
 
     cargo fmt -- --check
@@ -51,6 +51,7 @@ cargo_publish () {
             git commit -m"Version ${VERSION}"
             git tag "${VERSION}"
             git push origin "${VERSION}"
+            git push origin master
             cargo_publish diffus
             cargo_publish diffus-derive
             ;;
