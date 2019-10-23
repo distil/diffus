@@ -30,7 +30,7 @@ same_for_eq! { snake_case::SnakeCase }
 #[cfg(feature = "uuid-impl")]
 same_for_eq! { uuid::Uuid }
 
-impl<T: Same> Same for &T {
+impl<T: Same + ?Sized> Same for &T {
     fn same(&self, other: &Self) -> bool {
         (*self).same(*other)
     }

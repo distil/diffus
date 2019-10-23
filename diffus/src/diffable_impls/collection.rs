@@ -1,10 +1,9 @@
 use crate::{
     edit::{collection, Edit},
-    lcs::Lcs,
     Diffable, Same,
 };
 
-pub struct CollectionDiff<T>(crate::lcs::LcsResult<T>);
+pub struct CollectionDiff<T>(pub(crate) crate::lcs::LcsResult<T>);
 
 pub struct IntoIter<T>(<crate::lcs::LcsResult<T> as std::iter::IntoIterator>::IntoIter);
 
@@ -29,18 +28,19 @@ macro_rules! collection_impl {
     ($($typ:ident),*) => {
         $(
             impl<'a, T: Same + Diffable<'a> + 'a> Diffable<'a> for $typ<T> {
-                type Diff = CollectionDiff<collection::Edit<&'a T, T::Diff>>;
+                type Diff = CollectionDiff<collection::Edit<'a, T, T::Diff>>;
 
                 fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
-                    let (s, modified) = Lcs::new(
-                        self.iter(),
-                        || other.iter(),
-                        self.len(),
-                        other.len(),
-                    )
-                        .diff(self.iter(), other.iter());
 
-                    if modified {
+                    if let Some(s) = crate::lcs::enriched_lcs(
+                        crate::lcs::c_matrix(
+                            self.iter(),
+                            || other.iter(),
+                            self.len(),
+                            other.len(),
+                        ),
+                        self.iter(),
+                        other.iter()) {
                         Edit::Change(CollectionDiff(s))
                     } else {
                         Edit::Copy
@@ -60,18 +60,18 @@ macro_rules! set_impl {
     ($(($typ:ident, $key_constraint:ident)),*) => {
         $(
             impl<'a, T: Same + Diffable<'a> + $key_constraint + 'a> Diffable<'a> for $typ<T> {
-                type Diff = CollectionDiff<collection::Edit<&'a T, T::Diff>>;
+                type Diff = CollectionDiff<collection::Edit<'a, T, T::Diff>>;
 
                 fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
-                    let (s, modified) = Lcs::new(
+                    if let Some(s) = crate::lcs::enriched_lcs_unordered(
+                        crate::lcs::c_matrix(
+                            self.iter(),
+                            || other.iter(),
+                            self.len(),
+                            other.len(),
+                        ),
                         self.iter(),
-                        || other.iter(),
-                        self.len(),
-                        other.len(),
-                    )
-                        .diff_unordered(self.iter(), other.iter());
-
-                    if modified {
+                        other.iter()) {
                         Edit::Change(CollectionDiff(s))
                     } else {
                         Edit::Copy
