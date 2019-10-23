@@ -1,12 +1,12 @@
 #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
-#[derive(Debug, PartialEq)]
-pub enum Edit<'a, T, D> {
+#[derive(Debug, Eq, PartialEq)]
+pub enum Edit<'a, T: ?Sized, Diff> {
     Copy,
     VariantChanged(&'a T, &'a T),
-    AssociatedChanged(D),
+    AssociatedChanged(Diff),
 }
 
-impl<'a, T, D> Edit<'a, T, D> {
+impl<'a, T: ?Sized, D> Edit<'a, T, D> {
     pub fn is_copy(&self) -> bool {
         if let Self::Copy = self {
             true

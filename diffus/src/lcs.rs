@@ -1,104 +1,122 @@
-use super::edit::collection::Edit;
 
 use crate::Diffable;
 use crate::Same;
 
-pub(crate) struct Lcs<T: Same + ?Sized> {
-    storage: Vec<usize>,
+pub(crate) struct TwoDVec<T> {
+    storage: Vec<T>,
     width: usize,
-    height: usize,
-    marker: std::marker::PhantomData<T>,
+}
+
+impl<T: Clone> TwoDVec<T> {
+    pub fn new(initial: T, width: usize, height: usize) -> Self {
+        Self {
+            storage: vec![initial; width * height],
+            width,
+        }
+    }
+}
+
+impl<T> TwoDVec<T> {
+    pub fn height(&self) -> usize {
+        self.storage.len() / self.width
+    }
+}
+
+impl<T> std::ops::Index<usize> for TwoDVec<T> {
+    type Output = [T];
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.storage.as_slice()[self.width * index..][..self.width]
+    }
+}
+
+impl<T> std::ops::IndexMut<usize> for TwoDVec<T> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.storage.as_mut_slice()[self.width * index..][..self.width]
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Edit<T> {
+    Copy(T, T),
+    Insert(T),
+    Remove(T),
 }
 
 pub(crate) type LcsResult<T> = std::collections::vec_deque::VecDeque<T>;
 
-impl<'a, T: Same + Diffable<'a> + ?Sized + 'a> Lcs<T> {
-    pub(crate) fn new<I: Iterator<Item = &'a T>>(
-        x: impl Iterator<Item = &'a T>,
-        y: impl Fn() -> I,
-        x_len: usize,
-        y_len: usize,
-    ) -> Self {
-        let width = x_len + 1;
-        let height = y_len + 1;
+pub(crate) fn c_matrix<T: Same, I: Iterator<Item = T>>(
+    x: impl Iterator<Item = T>,
+    y: impl Fn() -> I,
+    x_len: usize,
+    y_len: usize,
+) -> TwoDVec<usize> {
+    let width = x_len + 1;
+    let height = y_len + 1;
 
-        let mut storage = vec![0; width * height];
+    let mut c = TwoDVec::new(0, width, height);
 
-        let a = |i: usize, j: usize| {
-            let result = j * width + i;
-
-            result
-        };
-
-        for (i, x) in x.enumerate() {
-            for (j, y) in y().enumerate() {
-                storage[a(i + 1, j + 1)] = if x.same(&y) {
-                    storage[a(i, j)] + 1
-                } else {
-                    storage[a(i + 1, j)].max(storage[a(i, j + 1)])
-                };
-            }
-        }
-
-        Self {
-            storage,
-            width,
-            height,
-            marker: std::marker::PhantomData,
+    for (i, x) in x.enumerate() {
+        for (j, y) in y().enumerate() {
+            c[j + 1][i + 1] = if x.same(&y) {
+                c[j][i] + 1
+            } else {
+                c[j][i + 1].max(c[j + 1][i])
+            };
         }
     }
 
-    fn diff_impl(
-        &self,
-        mut x: itertools::PutBack<impl Iterator<Item = &'a T>>,
-        mut y: itertools::PutBack<impl Iterator<Item = &'a T>>,
-        mut i: usize,
-        mut j: usize,
-    ) -> (LcsResult<Edit<&'a T, <T as Diffable<'a>>::Diff>>, bool)
-    where
-        T: 'a,
-    {
-        let a = |i, j| j * self.width + i;
+    c
+}
 
-        let (queue, modified) = std::iter::from_fn(move || {
-            let current_x = x.next();
-            let current_y = y.next();
+fn lcs_base<T: Same>(
+    c: TwoDVec<usize>,
+    mut x: itertools::PutBack<impl Iterator<Item = T>>,
+    mut y: itertools::PutBack<impl Iterator<Item = T>>,
+    mut i: usize,
+    mut j: usize,
+) -> Option<LcsResult<Edit<T>>> {
+    let queue = std::collections::VecDeque::with_capacity(c.width + c.height());
+    let (queue, modified) = std::iter::from_fn(move || {
+        let current_x = x.next();
+        let current_y = y.next();
 
-            let left = j.checked_sub(1).map(|j_minus| self.storage[a(i, j_minus)]);
-            let above = i.checked_sub(1).map(|i_minus| self.storage[a(i_minus, j)]);
+        let left = j
+            .checked_sub(1)
+            .map(|j_minus| c[j_minus][i]);
+        let above = i
+            .checked_sub(1)
+            .map(|i_minus| c[j][i_minus]);
 
-            if current_x.is_some()
-                && current_y.is_some()
-                && current_x
-                    .as_ref()
-                    .unwrap()
-                    .same(current_y.as_ref().unwrap())
-            {
-                i = i - 1;
-                j = j - 1;
+        if current_x.is_some()
+            && current_y.is_some()
+            && current_x
+            .as_ref()
+            .unwrap()
+            .same(current_y.as_ref().unwrap())
+        {
+            i = i - 1;
+            j = j - 1;
 
-                match (current_x, current_y) {
-                    (Some(current_x), Some(current_y)) => match current_x.diff(&current_y) {
-                        crate::edit::Edit::Copy => Some((Edit::Copy(current_x), false)),
-                        crate::edit::Edit::Change(diff) => Some((Edit::Change(diff), true)),
-                    },
-                    _ => unreachable!(),
-                }
-            } else if current_y.is_some() && (current_x.is_none() || left >= above) {
-                current_x.map(|c| x.put_back(c));
-                j = j - 1;
-                current_y.map(|value| (Edit::Insert(value), true))
-            } else if current_x.is_some() && (current_y.is_none() || left < above) {
-                current_y.map(|c| y.put_back(c));
-                i = i - 1;
-                current_x.map(|value| (Edit::Remove(value), true))
-            } else {
-                None
+            match (current_x, current_y) {
+                (Some(current_x), Some(current_y)) => Some((Edit::Copy(current_x, current_y), false)),
+                _ => unreachable!(),
             }
-        })
+        } else if current_y.is_some() && (current_x.is_none() || left >= above) {
+            current_x.map(|c| x.put_back(c));
+            j = j - 1;
+            current_y.map(|value| (Edit::Insert(value), true))
+        } else if current_x.is_some() && (current_y.is_none() || left < above) {
+            current_y.map(|c| y.put_back(c));
+            i = i - 1;
+            current_x.map(|value| (Edit::Remove(value), true))
+        } else {
+            None
+        }
+    })
         .fold(
             (
-                std::collections::VecDeque::with_capacity(self.width + self.height),
+                queue,
                 false,
             ),
             |(mut queue, modified), (edit, edit_modified)| {
@@ -106,45 +124,80 @@ impl<'a, T: Same + Diffable<'a> + ?Sized + 'a> Lcs<T> {
                 (queue, modified || edit_modified)
             },
         );
-
-        (queue, modified)
+    if modified {
+        Some(queue)
+    } else {
+        None
     }
+}
 
-    /// Returns the iterator of changes along with a bool indicating if there were any `Insert`/ `Remove`.
-    pub(crate) fn diff(
-        &self,
-        x: impl DoubleEndedIterator<Item = &'a T> + 'a,
-        y: impl DoubleEndedIterator<Item = &'a T> + 'a,
-    ) -> (LcsResult<Edit<&'a T, <T as Diffable<'a>>::Diff>>, bool)
-    where
-        T: 'a,
-    {
-        self.diff_impl(
-            itertools::put_back(x.rev()),
-            itertools::put_back(y.rev()),
-            self.width - 1,
-            self.height - 1,
-        )
-    }
+/// Returns the iterator of changes along with a bool indicating if there were any `Insert`/ `Remove`.
+pub(crate) fn lcs<T: Same>(
+    c: TwoDVec<usize>,
+    x: impl DoubleEndedIterator<Item = T>,
+    y: impl DoubleEndedIterator<Item = T>,
+) -> Option<LcsResult<Edit<T>>> {
+    let i = c.width - 1;
+    let j = c.height() - 1;
+    lcs_base(
+        c,
+        itertools::put_back(x.rev()),
+        itertools::put_back(y.rev()),
+        i,
+        j,
+    )
+}
 
-    /// Same as above but for iterators that don't implement `DoubleEndedIterator`.
-    /// This means we'll iterate backwards. But collections like `HashSet` doesn't have
-    /// a concept of direction anyway.
-    pub(crate) fn diff_unordered(
-        &self,
-        x: impl Iterator<Item = &'a T> + 'a,
-        y: impl Iterator<Item = &'a T> + 'a,
-    ) -> (LcsResult<Edit<&'a T, <T as Diffable<'a>>::Diff>>, bool)
-    where
-        T: 'a,
-    {
-        self.diff_impl(
-            itertools::put_back(x),
-            itertools::put_back(y),
-            self.width - 1,
-            self.height - 1,
-        )
-    }
+fn enriched_lcs_base<'a, T: Same + Diffable<'a> + ?Sized + 'a>(
+    result: impl Iterator<Item = Edit<&'a T>>
+) -> impl Iterator<Item = super::edit::collection::Edit<'a, T, <T as Diffable<'a>>::Diff>> {
+    result
+        .map(|edit| match edit {
+            Edit::Copy(left, right) => match left.diff(right) {
+                super::edit::Edit::Copy => super::edit::collection::Edit::Copy(left),
+                super::edit::Edit::Change(diff) => super::edit::collection::Edit::Change(diff),
+            },
+            Edit::Insert(value) => super::edit::collection::Edit::Insert(value),
+            Edit::Remove(value) => super::edit::collection::Edit::Remove(value),
+        })
+}
+
+/// Returns the iterator of changes along with a bool indicating if there were any `Insert`/ `Remove`.
+pub(crate) fn enriched_lcs<'a, T: Same + Diffable<'a> + ?Sized + 'a>(
+    c: TwoDVec<usize>,
+    x: impl DoubleEndedIterator<Item = &'a T> + 'a,
+    y: impl DoubleEndedIterator<Item = &'a T> + 'a,
+) -> Option<LcsResult<super::edit::collection::Edit<'a, T, <T as Diffable<'a>>::Diff>>> {
+    let i = c.width - 1;
+    let j = c.height() - 1;
+    lcs_base(
+        c,
+        itertools::put_back(x.rev()),
+        itertools::put_back(y.rev()),
+        i,
+        j,
+    )
+        .map(|result| enriched_lcs_base(result.into_iter()).collect())
+}
+
+/// Same as above but for iterators that don't implement `DoubleEndedIterator`.
+/// This means we'll iterate backwards. But collections like `HashSet` doesn't have
+/// a concept of direction anyway.
+pub(crate) fn enriched_lcs_unordered<'a, T: Same + Diffable<'a> + ?Sized + 'a>(
+    c: TwoDVec<usize>,
+    x: impl Iterator<Item = &'a T> + 'a,
+    y: impl Iterator<Item = &'a T> + 'a,
+) -> Option<LcsResult<super::edit::collection::Edit<'a, T, <T as Diffable<'a>>::Diff>>> {
+    let i = c.width - 1;
+    let j = c.height() - 1;
+    lcs_base(
+        c,
+        itertools::put_back(x),
+        itertools::put_back(y),
+        i,
+        j,
+    )
+        .map(|result| enriched_lcs_base(result.into_iter()).collect())
 }
 
 #[cfg(test)]
@@ -155,31 +208,23 @@ mod tests {
     fn characters() {
         let left = "XMJYAUZ";
         let right = "MZJAWXU";
-        let left_chars = left.chars().collect::<Vec<_>>();
-        let right_chars = right.chars().collect::<Vec<_>>();
 
-        let (s, modified) = Lcs::new(
-            left_chars.iter(),
-            || right_chars.iter(),
-            left_chars.len(),
-            right_chars.len(),
-        )
-        .diff(left_chars.iter(), right_chars.iter());
-        assert!(modified);
-        use Edit::*;
+        let c = c_matrix(left.chars(), || right.chars(), left.chars().count(), right.chars().count());
+        let s = lcs(c, left.chars(), right.chars()).unwrap();
+
         assert_eq!(
             s.into_iter().collect::<Vec<_>>(),
             vec![
-                Remove(&'X'),
-                Copy(&'M'),
-                Insert(&'Z'),
-                Copy(&'J'),
-                Remove(&'Y'),
-                Copy(&'A'),
-                Insert(&'W'),
-                Insert(&'X'),
-                Copy(&'U'),
-                Remove(&'Z')
+                Edit::Remove('X'),
+                Edit::Copy('M', 'M'),
+                Edit::Insert('Z'),
+                Edit::Copy('J', 'J'),
+                Edit::Remove('Y'),
+                Edit::Copy('A', 'A'),
+                Edit::Insert('W'),
+                Edit::Insert('X'),
+                Edit::Copy('U', 'U'),
+                Edit::Remove('Z')
             ]
         );
     }
@@ -189,30 +234,24 @@ mod tests {
         let left = "The quick brown fox jumps over the lazy dog";
         let right = "The quick brown dog leaps over the lazy cat";
 
-        let (s, modified) = Lcs::new(
-            left.split_whitespace(),
-            || right.split_whitespace(),
-            left.split_whitespace().count(),
-            right.split_whitespace().count(),
-        )
-        .diff(left.split_whitespace(), right.split_whitespace());
-        assert!(modified);
-        use Edit::*;
+        let c = c_matrix(left.split_whitespace(), || right.split_whitespace(), left.split_whitespace().count(), right.split_whitespace().count());
+        let s = lcs(c, left.split_whitespace(), right.split_whitespace()).unwrap();
+
         assert_eq!(
             s.into_iter().collect::<Vec<_>>(),
             vec![
-                Copy("The"),
-                Copy("quick"),
-                Copy("brown"),
-                Remove("fox"),
-                Remove("jumps"),
-                Insert("dog"),
-                Insert("leaps"),
-                Copy("over"),
-                Copy("the"),
-                Copy("lazy"),
-                Remove("dog"),
-                Insert("cat")
+                Edit::Copy("The", "The"),
+                Edit::Copy("quick", "quick"),
+                Edit::Copy("brown", "brown"),
+                Edit::Remove("fox"),
+                Edit::Remove("jumps"),
+                Edit::Insert("dog"),
+                Edit::Insert("leaps"),
+                Edit::Copy("over", "over"),
+                Edit::Copy("the", "the"),
+                Edit::Copy("lazy", "lazy"),
+                Edit::Remove("dog"),
+                Edit::Insert("cat")
             ]
         );
     }

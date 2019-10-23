@@ -1,43 +1,18 @@
 use crate::{
-    edit::{collection, Edit},
-    lcs::Lcs,
     Diffable,
 };
 
+pub type Edit = crate::lcs::Edit<char>;
+
 impl<'a> Diffable<'a> for str {
-    type Diff = Vec<collection::Edit<char, (char, char)>>;
+    type Diff = super::collection::CollectionDiff<Edit>;
 
-    fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
-        let self_chars = self.chars().collect::<Vec<_>>();
-        let other_chars = other.chars().collect::<Vec<_>>();
-        let (s, modified) = Lcs::new(
-            self_chars.iter(),
-            || other_chars.iter(),
-            self_chars.len(),
-            other_chars.len(),
-        )
-        .diff(self_chars.iter(), other_chars.iter());
-
-        // TODO: The above Lcs only handles iterators to references, but characters are
-        // TODO: intermediates. The conversion is done here but ideally should never need to
-        // TODO: be done at all
-        let s = s
-            .into_iter()
-            .map(|edit| {
-                use collection::Edit::*;
-
-                match edit {
-                    Remove(ch) => Remove(*ch),
-                    Insert(ch) => Insert(*ch),
-                    Copy(ch) => Copy(*ch),
-                    Change((left, right)) => Change((*left, *right)),
-                }
-            })
-            .collect();
-        if modified {
-            Edit::Change(s)
+    fn diff(&'a self, other: &'a Self) -> crate::edit::Edit<Self::Diff> {
+        let c = crate::lcs::c_matrix(self.chars(), || other.chars(), self.chars().count(), other.chars().count());
+        if let Some(s) = crate::lcs::lcs(c, self.chars(), other.chars()) {
+            crate::edit::Edit::Change(super::collection::CollectionDiff(s))
         } else {
-            Edit::Copy
+            crate::edit::Edit::Copy
         }
     }
 }
@@ -45,14 +20,14 @@ impl<'a> Diffable<'a> for str {
 impl<'a> Diffable<'a> for String {
     type Diff = <str as Diffable<'a>>::Diff;
 
-    fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
+    fn diff(&'a self, other: &'a Self) -> crate::edit::Edit<Self::Diff> {
         self.as_str().diff(other.as_str())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{collection::Edit::*, *};
+    use super::*;
 
     #[test]
     fn diff() {
@@ -62,20 +37,20 @@ mod tests {
         let right = "MZJAWXU".to_owned();
 
         let diff = left.diff(&right);
-        if let Edit::Change(diff) = diff {
+        if let crate::edit::Edit::Change(diff) = diff {
             assert_eq!(
-                diff,
+                diff.into_iter().collect::<Vec<_>>(),
                 vec![
-                    Remove('X'),
-                    Copy('M'),
-                    Insert('Z'),
-                    Copy('J'),
-                    Remove('Y'),
-                    Copy('A'),
-                    Insert('W'),
-                    Insert('X'),
-                    Copy('U'),
-                    Remove('Z')
+                    Edit::Remove('X'),
+                    Edit::Copy('M', 'M'),
+                    Edit::Insert('Z'),
+                    Edit::Copy('J', 'J'),
+                    Edit::Remove('Y'),
+                    Edit::Copy('A', 'A'),
+                    Edit::Insert('W'),
+                    Edit::Insert('X'),
+                    Edit::Copy('U', 'U'),
+                    Edit::Remove('Z')
                 ]
             );
         } else {

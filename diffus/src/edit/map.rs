@@ -2,7 +2,7 @@
 #[derive(Debug, PartialEq)]
 pub enum Edit<'a, T: crate::Diffable<'a> + ?Sized> {
     Insert(&'a T),
-    Remove,
+    Remove(&'a T),
     Copy,
     Change(T::Diff),
 }
@@ -25,7 +25,7 @@ impl<'a, T: crate::Diffable<'a> + ?Sized> Edit<'a, T> {
         }
     }
     pub fn is_remove(&self) -> bool {
-        if let Self::Remove = self {
+        if let Self::Remove(_) = self {
             true
         } else {
             false
@@ -47,6 +47,13 @@ impl<'a, T: crate::Diffable<'a> + ?Sized> Edit<'a, T> {
     }
     pub fn insert(&self) -> Option<&'a T> {
         if let Self::Insert(value) = self {
+            Some(value)
+        } else {
+            None
+        }
+    }
+    pub fn remove(&self) -> Option<&'a T> {
+        if let Self::Remove(value) = self {
             Some(value)
         } else {
             None
