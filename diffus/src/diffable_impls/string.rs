@@ -1,16 +1,35 @@
-use crate::{
-    Diffable,
-};
+use crate::Diffable;
 
 pub type Edit = crate::lcs::Edit<char>;
 
+pub struct Diff(pub(crate) crate::lcs::LcsResult<Edit>);
+
+pub struct IntoIter(<crate::lcs::LcsResult<Edit> as std::iter::IntoIterator>::IntoIter);
+
+impl std::iter::IntoIterator for Diff {
+    type Item = Edit;
+    type IntoIter = IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter(self.0.into_iter())
+    }
+}
+
+impl std::iter::Iterator for IntoIter {
+    type Item = Edit;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
+    }
+}
+
 impl<'a> Diffable<'a> for str {
-    type Diff = super::collection::CollectionDiff<Edit>;
+    type Diff = Diff;
 
     fn diff(&'a self, other: &'a Self) -> crate::edit::Edit<Self::Diff> {
         let c = crate::lcs::c_matrix(self.chars(), || other.chars(), self.chars().count(), other.chars().count());
         if let Some(s) = crate::lcs::lcs(c, self.chars(), other.chars()) {
-            crate::edit::Edit::Change(super::collection::CollectionDiff(s))
+            crate::edit::Edit::Change(Diff(s))
         } else {
             crate::edit::Edit::Copy
         }
