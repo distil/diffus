@@ -167,7 +167,7 @@ pub(crate) fn enriched_lcs<'a, T: Same + Diffable<'a> + ?Sized + 'a>(
     c: TwoDVec<usize>,
     x: impl DoubleEndedIterator<Item = &'a T> + 'a,
     y: impl DoubleEndedIterator<Item = &'a T> + 'a,
-) -> Option<LcsResult<super::edit::collection::Edit<'a, T, <T as Diffable<'a>>::Diff>>> {
+) -> Option<impl Iterator<Item = super::edit::collection::Edit<'a, T, <T as Diffable<'a>>::Diff>>> {
     let i = c.width - 1;
     let j = c.height() - 1;
     lcs_base(
@@ -177,7 +177,7 @@ pub(crate) fn enriched_lcs<'a, T: Same + Diffable<'a> + ?Sized + 'a>(
         i,
         j,
     )
-        .map(|result| enriched_lcs_base(result.into_iter()).collect())
+        .map(|result| enriched_lcs_base(result.into_iter()))
 }
 
 /// Same as above but for iterators that don't implement `DoubleEndedIterator`.
@@ -187,7 +187,7 @@ pub(crate) fn enriched_lcs_unordered<'a, T: Same + Diffable<'a> + ?Sized + 'a>(
     c: TwoDVec<usize>,
     x: impl Iterator<Item = &'a T> + 'a,
     y: impl Iterator<Item = &'a T> + 'a,
-) -> Option<LcsResult<super::edit::collection::Edit<'a, T, <T as Diffable<'a>>::Diff>>> {
+) -> Option<impl Iterator<Item = super::edit::collection::Edit<'a, T, <T as Diffable<'a>>::Diff>>> {
     let i = c.width - 1;
     let j = c.height() - 1;
     lcs_base(
@@ -197,7 +197,7 @@ pub(crate) fn enriched_lcs_unordered<'a, T: Same + Diffable<'a> + ?Sized + 'a>(
         i,
         j,
     )
-        .map(|result| enriched_lcs_base(result.into_iter()).collect())
+        .map(|result| enriched_lcs_base(result.into_iter()))
 }
 
 #[cfg(test)]

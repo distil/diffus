@@ -3,32 +3,11 @@ use crate::{
     Diffable, Same,
 };
 
-pub struct CollectionDiff<T>(pub(crate) crate::lcs::LcsResult<T>);
-
-pub struct IntoIter<T>(<crate::lcs::LcsResult<T> as std::iter::IntoIterator>::IntoIter);
-
-impl<T> std::iter::IntoIterator for CollectionDiff<T> {
-    type Item = T;
-    type IntoIter = IntoIter<T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter(self.0.into_iter())
-    }
-}
-
-impl<T> std::iter::Iterator for IntoIter<T> {
-    type Item = T;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.0.next()
-    }
-}
-
 macro_rules! collection_impl {
     ($($typ:ident),*) => {
         $(
             impl<'a, T: Same + Diffable<'a> + 'a> Diffable<'a> for $typ<T> {
-                type Diff = CollectionDiff<collection::Edit<'a, T, T::Diff>>;
+                type Diff = Vec<collection::Edit<'a, T, T::Diff>>;
 
                 fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
 
@@ -41,7 +20,7 @@ macro_rules! collection_impl {
                         ),
                         self.iter(),
                         other.iter()) {
-                        Edit::Change(CollectionDiff(s))
+                        Edit::Change(s.collect())
                     } else {
                         Edit::Copy
                     }
@@ -60,7 +39,7 @@ macro_rules! set_impl {
     ($(($typ:ident, $key_constraint:ident)),*) => {
         $(
             impl<'a, T: Same + Diffable<'a> + $key_constraint + 'a> Diffable<'a> for $typ<T> {
-                type Diff = CollectionDiff<collection::Edit<'a, T, T::Diff>>;
+                type Diff = Vec<collection::Edit<'a, T, T::Diff>>;
 
                 fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
                     if let Some(s) = crate::lcs::enriched_lcs_unordered(
@@ -72,7 +51,7 @@ macro_rules! set_impl {
                         ),
                         self.iter(),
                         other.iter()) {
-                        Edit::Change(CollectionDiff(s))
+                        Edit::Change(s.collect())
                     } else {
                         Edit::Copy
                     }
