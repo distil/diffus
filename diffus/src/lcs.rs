@@ -36,6 +36,7 @@ impl<T> std::ops::IndexMut<usize> for TwoDVec<T> {
     }
 }
 
+#[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
 #[derive(Debug, PartialEq, Eq)]
 pub enum Edit<T> {
     Same(T, T),
