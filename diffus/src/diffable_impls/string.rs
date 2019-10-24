@@ -1,14 +1,49 @@
 use crate::Diffable;
 
-pub type Edit = crate::lcs::Edit<char>;
+#[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
+#[derive(Debug, PartialEq, Eq)]
+pub enum Edit {
+    Copy(char),
+    Insert(char),
+    Remove(char),
+}
+
+impl From<crate::lcs::Edit<char>> for Edit {
+    fn from(edit: crate::lcs::Edit<char>) -> Self {
+        use crate::lcs::Edit::*;
+        match edit {
+            Same(left, _) => Self::Copy(left),
+            Insert(value) => Self::Insert(value),
+            Remove(value) => Self::Remove(value),
+        }
+    }
+}
+
+impl Edit {
+    pub fn is_copy(&self) -> bool {
+        if let Self::Copy(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+}
+
 
 impl<'a> Diffable<'a> for str {
     type Diff = Vec<Edit>;
 
     fn diff(&'a self, other: &'a Self) -> crate::edit::Edit<Self::Diff> {
-        let c = crate::lcs::c_matrix(self.chars(), || other.chars(), self.chars().count(), other.chars().count());
-        let s = crate::lcs::lcs(c, self.chars(), other.chars()).collect::<Vec<_>>();
-        if s.iter().all(Edit::is_same) {
+        let s = crate::lcs::lcs(
+            || self.chars(),
+            || other.chars(),
+            self.chars().count(),
+            other.chars().count(),
+        )
+            .map(Into::into)
+            .collect::<Vec<_>>();
+
+        if s.iter().all(Edit::is_copy) {
             crate::edit::Edit::Copy
         } else {
             crate::edit::Edit::Change(s)
@@ -41,14 +76,14 @@ mod tests {
                 diff.into_iter().collect::<Vec<_>>(),
                 vec![
                     Edit::Remove('X'),
-                    Edit::Same('M', 'M'),
+                    Edit::Copy('M'),
                     Edit::Insert('Z'),
-                    Edit::Same('J', 'J'),
+                    Edit::Copy('J'),
                     Edit::Remove('Y'),
-                    Edit::Same('A', 'A'),
+                    Edit::Copy('A'),
                     Edit::Insert('W'),
                     Edit::Insert('X'),
-                    Edit::Same('U', 'U'),
+                    Edit::Copy('U'),
                     Edit::Remove('Z')
                 ]
             );

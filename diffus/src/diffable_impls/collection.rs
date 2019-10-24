@@ -11,15 +11,14 @@ macro_rules! collection_impl {
 
                 fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
 
-                    let s = crate::lcs::enriched_lcs(
-                        crate::lcs::c_matrix(
-                            self.iter(),
+                    let s = crate::lcs::lcs_post_change(
+                        crate::lcs::lcs(
+                            || self.iter(),
                             || other.iter(),
                             self.len(),
                             other.len(),
-                        ),
-                        self.iter(),
-                        other.iter())
+                        )
+                    )
                         .collect::<Vec<_>>();
 
                     if s.iter().all(collection::Edit::is_copy) {

@@ -323,6 +323,7 @@ mod test {
 
             assert_eq!(json["Change"]["b"], Value::String("Copy".to_string()));
 
+            println!("{:#?}", json);
             assert_eq!(
                 json["Change"]["s"]["Change"][0]["Copy"],
                 Value::String("s".to_string())

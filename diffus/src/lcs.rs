@@ -2,40 +2,6 @@
 use crate::Diffable;
 use crate::Same;
 
-pub(crate) struct TwoDVec<T> {
-    storage: Vec<T>,
-    width: usize,
-}
-
-impl<T: Clone> TwoDVec<T> {
-    pub fn new(initial: T, width: usize, height: usize) -> Self {
-        Self {
-            storage: vec![initial; width * height],
-            width,
-        }
-    }
-}
-
-impl<T> TwoDVec<T> {
-    pub fn height(&self) -> usize {
-        self.storage.len() / self.width
-    }
-}
-
-impl<T> std::ops::Index<usize> for TwoDVec<T> {
-    type Output = [T];
-
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.storage.as_slice()[self.width * index..][..self.width]
-    }
-}
-
-impl<T> std::ops::IndexMut<usize> for TwoDVec<T> {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.storage.as_mut_slice()[self.width * index..][..self.width]
-    }
-}
-
 #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
 #[derive(Debug, PartialEq, Eq)]
 pub enum Edit<T> {
@@ -54,18 +20,18 @@ impl<T> Edit<T> {
     }
 }
 
-pub(crate) fn c_matrix<T: Same, I: Iterator<Item = T>>(
-    x: impl Iterator<Item = T>,
-    y: impl Fn() -> I,
+fn c_matrix<T: Same, I: Iterator<Item = T>, J: Iterator<Item = T>>(
+    x: impl Fn() -> I,
+    y: impl Fn() -> J,
     x_len: usize,
     y_len: usize,
-) -> TwoDVec<usize> {
+) -> crate::twodvec::TwoDVec<usize> {
     let width = x_len + 1;
     let height = y_len + 1;
 
-    let mut c = TwoDVec::new(0, width, height);
+    let mut c = crate::twodvec::TwoDVec::new(0, width, height);
 
-    for (i, x) in x.enumerate() {
+    for (i, x) in x().enumerate() {
         for (j, y) in y().enumerate() {
             c[j + 1][i + 1] = if x.same(&y) {
                 c[j][i] + 1
@@ -79,12 +45,13 @@ pub(crate) fn c_matrix<T: Same, I: Iterator<Item = T>>(
 }
 
 fn lcs_base<T: Same>(
-    c: TwoDVec<usize>,
+    c: crate::twodvec::TwoDVec<usize>,
     mut x: itertools::PutBack<impl Iterator<Item = T>>,
     mut y: itertools::PutBack<impl Iterator<Item = T>>,
-    mut i: usize,
-    mut j: usize,
 ) -> impl Iterator<Item = Edit<T>> {
+    let mut i = c.width() - 1;
+    let mut j = c.height() - 1;
+
     std::iter::from_fn(move || {
         let current_x = x.next();
         let current_y = y.next();
@@ -127,24 +94,21 @@ fn lcs_base<T: Same>(
         .rev()
 }
 
-/// Returns the iterator of changes along with a bool indicating if there were any `Insert`/ `Remove`.
-pub(crate) fn lcs<T: Same>(
-    c: TwoDVec<usize>,
-    x: impl DoubleEndedIterator<Item = T>,
-    y: impl DoubleEndedIterator<Item = T>,
+pub(crate) fn lcs<'a, T: Same, I: DoubleEndedIterator<Item = T>, J: DoubleEndedIterator<Item = T>>(
+    x: impl Fn() -> I,
+    y: impl Fn() -> J,
+    x_len: usize,
+    y_len: usize,
 ) -> impl Iterator<Item = Edit<T>> {
-    let i = c.width - 1;
-    let j = c.height() - 1;
     lcs_base(
-        c,
-        itertools::put_back(x.rev()),
-        itertools::put_back(y.rev()),
-        i,
-        j,
+        c_matrix(|| x(), || y(), x_len, y_len),
+        itertools::put_back(x().rev()),
+        itertools::put_back(y().rev()),
     )
 }
 
-fn enriched_lcs_base<'a, T: Same + Diffable<'a> + ?Sized + 'a>(
+// FIXME move out from lcs
+pub(crate) fn lcs_post_change<'a, T: Same + Diffable<'a> + ?Sized + 'a>(
     result: impl Iterator<Item = Edit<&'a T>>
 ) -> impl Iterator<Item = super::edit::collection::Edit<'a, T, <T as Diffable<'a>>::Diff>> {
     result
@@ -158,22 +122,6 @@ fn enriched_lcs_base<'a, T: Same + Diffable<'a> + ?Sized + 'a>(
         })
 }
 
-/// Returns the iterator of changes along with a bool indicating if there were any `Insert`/ `Remove`.
-pub(crate) fn enriched_lcs<'a, T: Same + Diffable<'a> + ?Sized + 'a>(
-    c: TwoDVec<usize>,
-    x: impl DoubleEndedIterator<Item = &'a T> + 'a,
-    y: impl DoubleEndedIterator<Item = &'a T> + 'a,
-) -> impl Iterator<Item = super::edit::collection::Edit<'a, T, <T as Diffable<'a>>::Diff>> {
-    let i = c.width - 1;
-    let j = c.height() - 1;
-    enriched_lcs_base(lcs_base(
-        c,
-        itertools::put_back(x.rev()),
-        itertools::put_back(y.rev()),
-        i,
-        j,
-    ))
-}
 
 #[cfg(test)]
 mod tests {
@@ -184,8 +132,7 @@ mod tests {
         let left = "XMJYAUZ";
         let right = "MZJAWXU";
 
-        let c = c_matrix(left.chars(), || right.chars(), left.chars().count(), right.chars().count());
-        let s = lcs(c, left.chars(), right.chars());
+        let s = lcs(|| left.chars(), || right.chars(), left.chars().count(), right.chars().count());
 
         assert_eq!(
             s.collect::<Vec<_>>(),
@@ -209,8 +156,7 @@ mod tests {
         let left = "The quick brown fox jumps over the lazy dog";
         let right = "The quick brown dog leaps over the lazy cat";
 
-        let c = c_matrix(left.split_whitespace(), || right.split_whitespace(), left.split_whitespace().count(), right.split_whitespace().count());
-        let s = lcs(c, left.split_whitespace(), right.split_whitespace());
+        let s = lcs(|| left.split_whitespace(), || right.split_whitespace(), left.split_whitespace().count(), right.split_whitespace().count());
 
         assert_eq!(
             s.collect::<Vec<_>>(),
