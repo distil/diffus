@@ -2,36 +2,16 @@ use crate::Diffable;
 
 pub type Edit = crate::lcs::Edit<char>;
 
-pub struct Diff(pub(crate) crate::lcs::LcsResult<Edit>);
-
-pub struct IntoIter(<crate::lcs::LcsResult<Edit> as std::iter::IntoIterator>::IntoIter);
-
-impl std::iter::IntoIterator for Diff {
-    type Item = Edit;
-    type IntoIter = IntoIter;
-
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter(self.0.into_iter())
-    }
-}
-
-impl std::iter::Iterator for IntoIter {
-    type Item = Edit;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.0.next()
-    }
-}
-
 impl<'a> Diffable<'a> for str {
-    type Diff = Diff;
+    type Diff = Vec<Edit>;
 
     fn diff(&'a self, other: &'a Self) -> crate::edit::Edit<Self::Diff> {
         let c = crate::lcs::c_matrix(self.chars(), || other.chars(), self.chars().count(), other.chars().count());
-        if let Some(s) = crate::lcs::lcs(c, self.chars(), other.chars()) {
-            crate::edit::Edit::Change(Diff(s))
-        } else {
+        let s = crate::lcs::lcs(c, self.chars(), other.chars()).collect::<Vec<_>>();
+        if s.iter().all(Edit::is_same) {
             crate::edit::Edit::Copy
+        } else {
+            crate::edit::Edit::Change(s)
         }
     }
 }
@@ -61,14 +41,14 @@ mod tests {
                 diff.into_iter().collect::<Vec<_>>(),
                 vec![
                     Edit::Remove('X'),
-                    Edit::Copy('M', 'M'),
+                    Edit::Same('M', 'M'),
                     Edit::Insert('Z'),
-                    Edit::Copy('J', 'J'),
+                    Edit::Same('J', 'J'),
                     Edit::Remove('Y'),
-                    Edit::Copy('A', 'A'),
+                    Edit::Same('A', 'A'),
                     Edit::Insert('W'),
                     Edit::Insert('X'),
-                    Edit::Copy('U', 'U'),
+                    Edit::Same('U', 'U'),
                     Edit::Remove('Z')
                 ]
             );

@@ -11,7 +11,7 @@ macro_rules! collection_impl {
 
                 fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
 
-                    if let Some(s) = crate::lcs::enriched_lcs(
+                    let s = crate::lcs::enriched_lcs(
                         crate::lcs::c_matrix(
                             self.iter(),
                             || other.iter(),
@@ -19,10 +19,13 @@ macro_rules! collection_impl {
                             other.len(),
                         ),
                         self.iter(),
-                        other.iter()) {
-                        Edit::Change(s.collect())
-                    } else {
+                        other.iter())
+                        .collect::<Vec<_>>();
+
+                    if s.iter().all(collection::Edit::is_copy) {
                         Edit::Copy
+                    } else {
+                        Edit::Change(s)
                     }
                 }
             }
@@ -42,7 +45,7 @@ macro_rules! set_impl {
                 type Diff = Vec<collection::Edit<'a, T, T::Diff>>;
 
                 fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
-                    if let Some(s) = crate::lcs::enriched_lcs_unordered(
+                    let s = crate::lcs::enriched_lcs_unordered(
                         crate::lcs::c_matrix(
                             self.iter(),
                             || other.iter(),
@@ -50,10 +53,13 @@ macro_rules! set_impl {
                             other.len(),
                         ),
                         self.iter(),
-                        other.iter()) {
-                        Edit::Change(s.collect())
-                    } else {
+                        other.iter())
+                        .collect::<Vec<_>>();
+
+                    if s.iter().all(collection::Edit::is_copy) {
                         Edit::Copy
+                    } else {
+                        Edit::Change(s)
                     }
                 }
             }
