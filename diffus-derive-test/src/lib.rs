@@ -305,7 +305,7 @@ mod test {
         }
 
         #[test]
-        fn example_test() {
+        fn example() {
             use serde_json::*;
 
             let left = &SA {
