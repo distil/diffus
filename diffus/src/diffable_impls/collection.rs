@@ -38,44 +38,6 @@ collection_impl! {
     BinaryHeap, LinkedList, Vec, VecDeque
 }
 
-macro_rules! set_impl {
-    ($(($typ:ident, $key_constraint:ident)),*) => {
-        $(
-            impl<'a, T: Same + Diffable<'a> + $key_constraint + 'a> Diffable<'a> for $typ<T> {
-                type Diff = Vec<collection::Edit<'a, T, T::Diff>>;
-
-                fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
-                    let s = crate::lcs::enriched_lcs_unordered(
-                        crate::lcs::c_matrix(
-                            self.iter(),
-                            || other.iter(),
-                            self.len(),
-                            other.len(),
-                        ),
-                        self.iter(),
-                        other.iter())
-                        .collect::<Vec<_>>();
-
-                    if s.iter().all(collection::Edit::is_copy) {
-                        Edit::Copy
-                    } else {
-                        Edit::Change(s)
-                    }
-                }
-            }
-        )*
-    }
-}
-
-use std::{
-    collections::{BTreeSet, HashSet},
-    hash::Hash,
-};
-set_impl! {
-    (BTreeSet, Hash),
-    (HashSet, Hash)
-}
-
 #[cfg(test)]
 mod tests {
     use super::{collection::Edit::*, *};

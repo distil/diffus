@@ -174,25 +174,6 @@ pub(crate) fn enriched_lcs<'a, T: Same + Diffable<'a> + ?Sized + 'a>(
     ))
 }
 
-/// Same as above but for iterators that don't implement `DoubleEndedIterator`.
-/// This means we'll iterate backwards. But collections like `HashSet` doesn't have
-/// a concept of direction anyway.
-pub(crate) fn enriched_lcs_unordered<'a, T: Same + Diffable<'a> + ?Sized + 'a>(
-    c: TwoDVec<usize>,
-    x: impl Iterator<Item = &'a T> + 'a,
-    y: impl Iterator<Item = &'a T> + 'a,
-) -> impl Iterator<Item = super::edit::collection::Edit<'a, T, <T as Diffable<'a>>::Diff>> {
-    let i = c.width - 1;
-    let j = c.height() - 1;
-    enriched_lcs_base(lcs_base(
-        c,
-        itertools::put_back(x),
-        itertools::put_back(y),
-        i,
-        j,
-    ))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
