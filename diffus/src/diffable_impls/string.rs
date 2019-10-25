@@ -29,7 +29,6 @@ impl Edit {
     }
 }
 
-
 impl<'a> Diffable<'a> for str {
     type Diff = Vec<Edit>;
 
@@ -40,8 +39,8 @@ impl<'a> Diffable<'a> for str {
             self.chars().count(),
             other.chars().count(),
         )
-            .map(Into::into)
-            .collect::<Vec<_>>();
+        .map(Into::into)
+        .collect::<Vec<_>>();
 
         if s.iter().all(Edit::is_copy) {
             crate::edit::Edit::Copy

@@ -1,4 +1,3 @@
-
 use crate::Diffable;
 use crate::Same;
 
@@ -56,19 +55,15 @@ fn lcs_base<T: Same>(
         let current_x = x.next();
         let current_y = y.next();
 
-        let left = j
-            .checked_sub(1)
-            .map(|j_minus| c[j_minus][i]);
-        let above = i
-            .checked_sub(1)
-            .map(|i_minus| c[j][i_minus]);
+        let left = j.checked_sub(1).map(|j_minus| c[j_minus][i]);
+        let above = i.checked_sub(1).map(|i_minus| c[j][i_minus]);
 
         if current_x.is_some()
             && current_y.is_some()
             && current_x
-            .as_ref()
-            .unwrap()
-            .same(current_y.as_ref().unwrap())
+                .as_ref()
+                .unwrap()
+                .same(current_y.as_ref().unwrap())
         {
             i = i - 1;
             j = j - 1;
@@ -89,12 +84,17 @@ fn lcs_base<T: Same>(
             None
         }
     })
-        .collect::<Vec<_>>()
-        .into_iter()
-        .rev()
+    .collect::<Vec<_>>()
+    .into_iter()
+    .rev()
 }
 
-pub(crate) fn lcs<'a, T: Same, I: DoubleEndedIterator<Item = T>, J: DoubleEndedIterator<Item = T>>(
+pub(crate) fn lcs<
+    'a,
+    T: Same,
+    I: DoubleEndedIterator<Item = T>,
+    J: DoubleEndedIterator<Item = T>,
+>(
     x: impl Fn() -> I,
     y: impl Fn() -> J,
     x_len: usize,
@@ -109,19 +109,17 @@ pub(crate) fn lcs<'a, T: Same, I: DoubleEndedIterator<Item = T>, J: DoubleEndedI
 
 // FIXME move out from lcs
 pub(crate) fn lcs_post_change<'a, T: Same + Diffable<'a> + ?Sized + 'a>(
-    result: impl Iterator<Item = Edit<&'a T>>
+    result: impl Iterator<Item = Edit<&'a T>>,
 ) -> impl Iterator<Item = super::edit::collection::Edit<'a, T, <T as Diffable<'a>>::Diff>> {
-    result
-        .map(|edit| match edit {
-            Edit::Same(left, right) => match left.diff(right) {
-                super::edit::Edit::Copy => super::edit::collection::Edit::Copy(left),
-                super::edit::Edit::Change(diff) => super::edit::collection::Edit::Change(diff),
-            },
-            Edit::Insert(value) => super::edit::collection::Edit::Insert(value),
-            Edit::Remove(value) => super::edit::collection::Edit::Remove(value),
-        })
+    result.map(|edit| match edit {
+        Edit::Same(left, right) => match left.diff(right) {
+            super::edit::Edit::Copy => super::edit::collection::Edit::Copy(left),
+            super::edit::Edit::Change(diff) => super::edit::collection::Edit::Change(diff),
+        },
+        Edit::Insert(value) => super::edit::collection::Edit::Insert(value),
+        Edit::Remove(value) => super::edit::collection::Edit::Remove(value),
+    })
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -132,7 +130,12 @@ mod tests {
         let left = "XMJYAUZ";
         let right = "MZJAWXU";
 
-        let s = lcs(|| left.chars(), || right.chars(), left.chars().count(), right.chars().count());
+        let s = lcs(
+            || left.chars(),
+            || right.chars(),
+            left.chars().count(),
+            right.chars().count(),
+        );
 
         assert_eq!(
             s.collect::<Vec<_>>(),
@@ -156,7 +159,12 @@ mod tests {
         let left = "The quick brown fox jumps over the lazy dog";
         let right = "The quick brown dog leaps over the lazy cat";
 
-        let s = lcs(|| left.split_whitespace(), || right.split_whitespace(), left.split_whitespace().count(), right.split_whitespace().count());
+        let s = lcs(
+            || left.split_whitespace(),
+            || right.split_whitespace(),
+            left.split_whitespace().count(),
+            right.split_whitespace().count(),
+        );
 
         assert_eq!(
             s.collect::<Vec<_>>(),
