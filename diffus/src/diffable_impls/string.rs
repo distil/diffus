@@ -1,43 +1,52 @@
-use crate::{
-    edit::{collection, Edit},
-    lcs::Lcs,
-    Diffable,
-};
+use crate::Diffable;
+
+#[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
+#[derive(Debug, PartialEq, Eq)]
+pub enum Edit {
+    Copy(char),
+    Insert(char),
+    Remove(char),
+}
+
+impl From<crate::lcs::Edit<char>> for Edit {
+    fn from(edit: crate::lcs::Edit<char>) -> Self {
+        use crate::lcs::Edit::*;
+        match edit {
+            Same(left, _) => Self::Copy(left),
+            Insert(value) => Self::Insert(value),
+            Remove(value) => Self::Remove(value),
+        }
+    }
+}
+
+impl Edit {
+    pub fn is_copy(&self) -> bool {
+        if let Self::Copy(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+}
+
 
 impl<'a> Diffable<'a> for str {
-    type Diff = Vec<collection::Edit<char, (char, char)>>;
+    type Diff = Vec<Edit>;
 
-    fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
-        let self_chars = self.chars().collect::<Vec<_>>();
-        let other_chars = other.chars().collect::<Vec<_>>();
-        let (s, modified) = Lcs::new(
-            self_chars.iter(),
-            || other_chars.iter(),
-            self_chars.len(),
-            other_chars.len(),
+    fn diff(&'a self, other: &'a Self) -> crate::edit::Edit<Self::Diff> {
+        let s = crate::lcs::lcs(
+            || self.chars(),
+            || other.chars(),
+            self.chars().count(),
+            other.chars().count(),
         )
-        .diff(self_chars.iter(), other_chars.iter());
+            .map(Into::into)
+            .collect::<Vec<_>>();
 
-        // TODO: The above Lcs only handles iterators to references, but characters are
-        // TODO: intermediates. The conversion is done here but ideally should never need to
-        // TODO: be done at all
-        let s = s
-            .into_iter()
-            .map(|edit| {
-                use collection::Edit::*;
-
-                match edit {
-                    Remove(ch) => Remove(*ch),
-                    Insert(ch) => Insert(*ch),
-                    Copy(ch) => Copy(*ch),
-                    Change((left, right)) => Change((*left, *right)),
-                }
-            })
-            .collect();
-        if modified {
-            Edit::Change(s)
+        if s.iter().all(Edit::is_copy) {
+            crate::edit::Edit::Copy
         } else {
-            Edit::Copy
+            crate::edit::Edit::Change(s)
         }
     }
 }
@@ -45,14 +54,14 @@ impl<'a> Diffable<'a> for str {
 impl<'a> Diffable<'a> for String {
     type Diff = <str as Diffable<'a>>::Diff;
 
-    fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
+    fn diff(&'a self, other: &'a Self) -> crate::edit::Edit<Self::Diff> {
         self.as_str().diff(other.as_str())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{collection::Edit::*, *};
+    use super::*;
 
     #[test]
     fn diff() {
@@ -62,20 +71,20 @@ mod tests {
         let right = "MZJAWXU".to_owned();
 
         let diff = left.diff(&right);
-        if let Edit::Change(diff) = diff {
+        if let crate::edit::Edit::Change(diff) = diff {
             assert_eq!(
-                diff,
+                diff.into_iter().collect::<Vec<_>>(),
                 vec![
-                    Remove('X'),
-                    Copy('M'),
-                    Insert('Z'),
-                    Copy('J'),
-                    Remove('Y'),
-                    Copy('A'),
-                    Insert('W'),
-                    Insert('X'),
-                    Copy('U'),
-                    Remove('Z')
+                    Edit::Remove('X'),
+                    Edit::Copy('M'),
+                    Edit::Insert('Z'),
+                    Edit::Copy('J'),
+                    Edit::Remove('Y'),
+                    Edit::Copy('A'),
+                    Edit::Insert('W'),
+                    Edit::Insert('X'),
+                    Edit::Copy('U'),
+                    Edit::Remove('Z')
                 ]
             );
         } else {

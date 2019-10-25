@@ -20,7 +20,7 @@ macro_rules! map_impl {
 
                     let value_diffs = unique_other
                         .map(|(k, v)| (k, map::Edit::Insert(v)))
-                        .chain(unique_self.map(|(k, _)| (k, map::Edit::Remove)))
+                        .chain(unique_self.map(|(k, v)| (k, map::Edit::Remove(v))))
                         .chain(intersection.map(|(k, (self_v, other_v))| (k, self_v.diff(other_v).into())))
                         .collect::<$typ<_, _>>();
 

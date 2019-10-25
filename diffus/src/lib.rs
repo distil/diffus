@@ -2,6 +2,7 @@ pub mod diffable_impls;
 pub mod edit;
 mod lcs;
 pub mod same;
+mod twodvec;
 
 pub trait Diffable<'a> {
     type Diff: 'a;

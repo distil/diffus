@@ -2,14 +2,14 @@ use crate::Same;
 
 #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
 #[derive(Debug, PartialEq, Eq)]
-pub enum Edit<T, D> {
-    Copy(T),
-    Change(D),
-    Insert(T),
-    Remove(T),
+pub enum Edit<'a, T: ?Sized, Diff> {
+    Copy(&'a T),
+    Insert(&'a T),
+    Remove(&'a T),
+    Change(Diff),
 }
 
-impl<T: Same, D> Edit<T, D> {
+impl<'a, T: Same + ?Sized, Diff> Edit<'a, T, Diff> {
     pub fn is_copy(&self) -> bool {
         if let Self::Copy(_) = self {
             true
@@ -32,6 +32,10 @@ impl<T: Same, D> Edit<T, D> {
         } else {
             false
         }
+    }
+
+    pub fn is_change(&self) -> bool {
+        self.change().is_some()
     }
 
     pub fn copy(&self) -> Option<&T> {
@@ -58,7 +62,7 @@ impl<T: Same, D> Edit<T, D> {
         }
     }
 
-    pub fn change(&self) -> Option<&D> {
+    pub fn change(&self) -> Option<&Diff> {
         if let Self::Change(value) = self {
             Some(value)
         } else {
