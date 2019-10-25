@@ -19,12 +19,15 @@ mod test {
                 Inside { p }
             }
         }
-
     }
 
     #[test]
     fn vis_check() {
-        if let edit::Edit::Change(hide::EditedInside { p: edit::Edit::Change(diff), .. }) = hide::Inside::new(0).diff(&hide::Inside::new(1)) {
+        if let edit::Edit::Change(hide::EditedInside {
+            p: edit::Edit::Change(diff),
+            ..
+        }) = hide::Inside::new(0).diff(&hide::Inside::new(1))
+        {
             assert_eq!(diff, (&0, &1));
         } else {
             unreachable!()
