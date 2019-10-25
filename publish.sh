@@ -3,10 +3,11 @@
 set -o errexit -o nounset -o pipefail -o xtrace
 
 VERSION="$1"
-[ -z "${VERSION}" ] && echo "Need to provide a version" && exit 1
 
 cargo_publish () {
-    ( cd $1
+    (
+        cd $1
+
         cargo package
         echo "Files added:"
         cargo package --list
@@ -18,27 +19,29 @@ cargo_publish () {
                 ;;
             *)
                 echo "Aborted"
-                exit 3
+                exit 5
                 ;;
         esac
-
     )
-
 }
 
-( cd "$( dirname "${BASH_SOURCE[0]}" )"
+(
+    cd "$( dirname "${BASH_SOURCE[0]}" )"
+
     git fetch
-    test -z "$(git status --porcelain)" || (echo "Dirty repo"; exit 5)
-    test -z "$(git diff origin/master)" || (echo "Not up to date with origin/master"; exit 6)
+    test -z "$(git status --porcelain)" || (echo "Dirty repo"; exit 2)
+    test -z "$(git diff origin/master)" || (echo "Not up to date with origin/master"; exit 3)
+
     ./test.sh
 
     cargo fmt -- --check
 
     git fetch --tags
     git tag -l | sed '/^'"${VERSION}"'$/{q2}' > /dev/null \
-        || (echo "${VERSION} already exists"; exit 2)
+        || (echo "${VERSION} already exists"; exit 4)
 
-    find . -iname Cargo.toml \
+    find . \
+        -iname Cargo.toml \
         -not -path "./target/*" \
         -exec sed -i 's/^version = .*$/version = "'"${VERSION}"'"/g' '{}' \; \
         -exec git add '{}' \;
