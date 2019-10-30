@@ -7,7 +7,7 @@ mod twodvec;
 pub trait Diffable<'a> {
     type Diff: 'a;
 
-    fn diff(&'a self, other: &'a Self) -> edit::Edit<Self::Diff>;
+    fn diff(&'a self, other: &'a Self) -> edit::Edit<'a, Self>;
 }
 
 pub trait Same {

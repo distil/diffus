@@ -4,10 +4,15 @@ pub mod option;
 pub mod primitives;
 pub mod string;
 
-impl<'a, T: crate::Diffable<'a> + 'a> crate::Diffable<'a> for &'a T {
+use crate::{edit, Diffable};
+
+impl<'a, T: Diffable<'a> + 'a> Diffable<'a> for &'a T {
     type Diff = T::Diff;
 
-    fn diff(&self, other: &Self) -> crate::edit::Edit<Self::Diff> {
-        (*self).diff(*other)
+    fn diff(&'a self, other: &'a Self) -> edit::Edit<'a, Self> {
+        match (*self).diff(*other) {
+            edit::Edit::Change(diff) => edit::Edit::Change(diff),
+            edit::Edit::Copy(_) => edit::Edit::Copy(self),
+        }
     }
 }

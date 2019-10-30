@@ -1,13 +1,15 @@
+use crate::Diffable;
+
 #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
 #[derive(Debug, PartialEq)]
-pub enum Edit<'a, T: crate::Diffable<'a> + ?Sized> {
+pub enum Edit<'a, T: Diffable<'a> + ?Sized> {
+    Copy(&'a T),
     Insert(&'a T),
     Remove(&'a T),
-    Copy,
     Change(T::Diff),
 }
 
-impl<'a, T: crate::Diffable<'a> + ?Sized> Edit<'a, T> {
+impl<'a, T: Diffable<'a> + ?Sized> Edit<'a, T> {
     //
     // Checks if the edit is an insert.
     //
@@ -32,7 +34,7 @@ impl<'a, T: crate::Diffable<'a> + ?Sized> Edit<'a, T> {
         }
     }
     pub fn is_copy(&self) -> bool {
-        if let Self::Copy = self {
+        if let Self::Copy(_) = self {
             true
         } else {
             false
@@ -62,6 +64,13 @@ impl<'a, T: crate::Diffable<'a> + ?Sized> Edit<'a, T> {
     pub fn change(&self) -> Option<&T::Diff> {
         if let Self::Change(value_diff) = self {
             Some(value_diff)
+        } else {
+            None
+        }
+    }
+    pub fn copy(&self) -> Option<&'a T> {
+        if let Self::Copy(value) = self {
+            Some(value)
         } else {
             None
         }

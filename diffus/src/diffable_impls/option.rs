@@ -1,19 +1,19 @@
 use crate::{
-    edit::{enm, Edit},
+    edit::{self, enm},
     Diffable,
 };
 
 impl<'a, T: Diffable<'a> + 'a> Diffable<'a> for Option<T> {
     type Diff = enm::Edit<'a, Self, T::Diff>;
 
-    fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
+    fn diff(&'a self, other: &'a Self) -> edit::Edit<Self> {
         match (self, other) {
-            (None, None) => Edit::Copy,
+            (None, None) => edit::Edit::Copy(self),
             (Some(a), Some(b)) => match a.diff(&b) {
-                Edit::Copy => Edit::Copy,
-                Edit::Change(d) => Edit::Change(enm::Edit::AssociatedChanged(d)),
+                edit::Edit::Copy(_) => edit::Edit::Copy(self),
+                edit::Edit::Change(diff) => edit::Edit::Change(enm::Edit::AssociatedChanged(diff)),
             },
-            _ => Edit::Change(enm::Edit::VariantChanged(self, other)),
+            _ => edit::Edit::Change(enm::Edit::VariantChanged(self, other)),
         }
     }
 }

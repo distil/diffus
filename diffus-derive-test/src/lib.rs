@@ -78,7 +78,7 @@ mod test {
 
             if let (
                 &collection::Edit::Change(EditedIdentified {
-                    id: edit::Edit::Copy,
+                    id: edit::Edit::Copy(&2),
                     value: edit::Edit::Change((&0, &1)),
                 }),
                 &collection::Edit::Remove(&Identified { id: 3, value: 0 }),
@@ -239,6 +239,7 @@ mod test {
         }
     }
 
+    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
     #[derive(Diffus, Debug, PartialEq)]
     struct Inner {
         x: String,
@@ -321,11 +322,42 @@ mod test {
 
             let json: Value = from_str(&string).unwrap();
 
-            assert_eq!(json["Change"]["b"], Value::String("Copy".to_string()));
-
             assert_eq!(
-                json["Change"]["s"]["Change"][0]["Copy"],
-                Value::String("s".to_string())
+                json,
+                serde_json::json!({
+                    "Change": {
+                        "b": {
+                            "Copy": {
+                                "u": 34,
+                            }
+                        },
+                        "s": {
+                            "Change": [
+                                {
+                                    "Copy": "s",
+                                },
+                                {
+                                    "Copy": "t",
+                                },
+                                {
+                                    "Copy": "r",
+                                },
+                                {
+                                    "Remove": "i",
+                                },
+                                {
+                                    "Remove": "n",
+                                },
+                                {
+                                    "Copy": "g",
+                                },
+                                {
+                                    "Insert": "a",
+                                },
+                            ]
+                        }
+                    }
+                })
             );
         }
     }

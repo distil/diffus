@@ -1,5 +1,4 @@
-use crate::Diffable;
-use crate::Same;
+use crate::{edit, Diffable, Same};
 
 #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
 #[derive(Debug, PartialEq, Eq)]
@@ -110,14 +109,14 @@ pub(crate) fn lcs<
 // FIXME move out from lcs
 pub(crate) fn lcs_post_change<'a, T: Same + Diffable<'a> + ?Sized + 'a>(
     result: impl Iterator<Item = Edit<&'a T>>,
-) -> impl Iterator<Item = super::edit::collection::Edit<'a, T, <T as Diffable<'a>>::Diff>> {
+) -> impl Iterator<Item = edit::collection::Edit<'a, T, <T as Diffable<'a>>::Diff>> {
     result.map(|edit| match edit {
         Edit::Same(left, right) => match left.diff(right) {
-            super::edit::Edit::Copy => super::edit::collection::Edit::Copy(left),
-            super::edit::Edit::Change(diff) => super::edit::collection::Edit::Change(diff),
+            edit::Edit::Copy(t) => edit::collection::Edit::Copy(t),
+            edit::Edit::Change(diff) => edit::collection::Edit::Change(diff),
         },
-        Edit::Insert(value) => super::edit::collection::Edit::Insert(value),
-        Edit::Remove(value) => super::edit::collection::Edit::Remove(value),
+        Edit::Insert(value) => edit::collection::Edit::Insert(value),
+        Edit::Remove(value) => edit::collection::Edit::Remove(value),
     })
 }
 

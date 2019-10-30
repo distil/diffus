@@ -1,5 +1,5 @@
 use crate::{
-    edit::{collection, Edit},
+    edit::{self, collection},
     Diffable, Same,
 };
 
@@ -9,7 +9,7 @@ macro_rules! collection_impl {
             impl<'a, T: Same + Diffable<'a> + 'a> Diffable<'a> for $typ<T> {
                 type Diff = Vec<collection::Edit<'a, T, T::Diff>>;
 
-                fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
+                fn diff(&'a self, other: &'a Self) -> edit::Edit<Self> {
 
                     let s = crate::lcs::lcs_post_change(
                         crate::lcs::lcs(
@@ -22,9 +22,9 @@ macro_rules! collection_impl {
                         .collect::<Vec<_>>();
 
                     if s.iter().all(collection::Edit::is_copy) {
-                        Edit::Copy
+                        edit::Edit::Copy(self)
                     } else {
-                        Edit::Change(s)
+                        edit::Edit::Change(s)
                     }
                 }
             }
@@ -39,7 +39,7 @@ collection_impl! {
 
 #[cfg(test)]
 mod tests {
-    use super::{collection::Edit::*, *};
+    use super::*;
 
     #[test]
     fn diff() {
@@ -49,7 +49,9 @@ mod tests {
         let right = b"MZJAWXU".to_vec();
 
         let diff = left.diff(&right);
-        if let Edit::Change(diff) = diff {
+        if let edit::Edit::Change(diff) = diff {
+            use collection::Edit::*;
+
             assert_eq!(
                 diff.into_iter().collect::<Vec<_>>(),
                 vec![

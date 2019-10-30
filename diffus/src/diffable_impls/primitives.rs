@@ -1,4 +1,4 @@
-use crate::{edit::Edit, Diffable};
+use crate::{edit, Diffable};
 
 macro_rules! primitive_impl {
     ($($typ:ty),*) => {
@@ -6,11 +6,11 @@ macro_rules! primitive_impl {
             impl<'a> Diffable<'a> for $typ {
                 type Diff = (&'a $typ, &'a $typ);
 
-                fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
+                fn diff(&'a self, other: &'a Self) -> edit::Edit<Self> {
                     if self == other {
-                        Edit::Copy
+                        edit::Edit::Copy(self)
                     } else {
-                        Edit::Change((self, other))
+                        edit::Edit::Change((self, other))
                     }
                 }
             }

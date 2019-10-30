@@ -2,19 +2,29 @@ pub mod collection;
 pub mod enm;
 pub mod map;
 
+use crate::Diffable;
+
 #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
-#[derive(Debug, PartialEq)]
-pub enum Edit<Diff> {
-    Copy,
-    Change(Diff),
+#[derive(Debug, PartialEq, Eq)]
+pub enum Edit<'a, T: Diffable<'a> + ?Sized> {
+    Copy(&'a T),
+    Change(T::Diff),
 }
 
-impl<Diff> Edit<Diff> {
+impl<'a, T: Diffable<'a> + ?Sized> Edit<'a, T> {
     pub fn is_copy(&self) -> bool {
-        if let Self::Copy = self {
+        if let Self::Copy(_) = self {
             true
         } else {
             false
+        }
+    }
+
+    pub fn copy(&self) -> Option<&'a T> {
+        if let Self::Copy(value) = self {
+            Some(value)
+        } else {
+            None
         }
     }
 
@@ -26,7 +36,7 @@ impl<Diff> Edit<Diff> {
         }
     }
 
-    pub fn change(&self) -> Option<&Diff> {
+    pub fn change(&self) -> Option<&T::Diff> {
         if let Self::Change(value_diff) = self {
             Some(value_diff)
         } else {
@@ -35,10 +45,10 @@ impl<Diff> Edit<Diff> {
     }
 }
 
-impl<'a, Diff, T: crate::Diffable<'a, Diff = Diff> + 'a> Into<map::Edit<'a, T>> for Edit<Diff> {
+impl<'a, Diff, T: Diffable<'a, Diff = Diff> + 'a> Into<map::Edit<'a, T>> for Edit<'a, T> {
     fn into(self) -> map::Edit<'a, T> {
         match self {
-            Self::Copy => map::Edit::Copy,
+            Self::Copy(value) => map::Edit::Copy(value),
             Self::Change(diff) => map::Edit::Change(diff),
         }
     }
