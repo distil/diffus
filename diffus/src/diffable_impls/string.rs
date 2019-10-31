@@ -1,4 +1,4 @@
-use crate::Diffable;
+use crate::{edit, lcs, Diffable};
 
 #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
 #[derive(Debug, PartialEq, Eq)]
@@ -8,9 +8,9 @@ pub enum Edit {
     Remove(char),
 }
 
-impl From<crate::lcs::Edit<char>> for Edit {
-    fn from(edit: crate::lcs::Edit<char>) -> Self {
-        use crate::lcs::Edit::*;
+impl From<lcs::Edit<char>> for Edit {
+    fn from(edit: lcs::Edit<char>) -> Self {
+        use lcs::Edit::*;
         match edit {
             Same(left, _) => Self::Copy(left),
             Insert(value) => Self::Insert(value),
@@ -32,8 +32,8 @@ impl Edit {
 impl<'a> Diffable<'a> for str {
     type Diff = Vec<Edit>;
 
-    fn diff(&'a self, other: &'a Self) -> crate::edit::Edit<Self::Diff> {
-        let s = crate::lcs::lcs(
+    fn diff(&'a self, other: &'a Self) -> edit::Edit<Self> {
+        let s = lcs::lcs(
             || self.chars(),
             || other.chars(),
             self.chars().count(),
@@ -43,9 +43,9 @@ impl<'a> Diffable<'a> for str {
         .collect::<Vec<_>>();
 
         if s.iter().all(Edit::is_copy) {
-            crate::edit::Edit::Copy
+            edit::Edit::Copy(self)
         } else {
-            crate::edit::Edit::Change(s)
+            edit::Edit::Change(s)
         }
     }
 }
@@ -53,8 +53,11 @@ impl<'a> Diffable<'a> for str {
 impl<'a> Diffable<'a> for String {
     type Diff = <str as Diffable<'a>>::Diff;
 
-    fn diff(&'a self, other: &'a Self) -> crate::edit::Edit<Self::Diff> {
-        self.as_str().diff(other.as_str())
+    fn diff(&'a self, other: &'a Self) -> edit::Edit<Self> {
+        match self.as_str().diff(other.as_str()) {
+            edit::Edit::Change(diff) => edit::Edit::Change(diff),
+            edit::Edit::Copy(_) => edit::Edit::Copy(self),
+        }
     }
 }
 
@@ -70,7 +73,7 @@ mod tests {
         let right = "MZJAWXU".to_owned();
 
         let diff = left.diff(&right);
-        if let crate::edit::Edit::Change(diff) = diff {
+        if let edit::Edit::Change(diff) = diff {
             assert_eq!(
                 diff.into_iter().collect::<Vec<_>>(),
                 vec![

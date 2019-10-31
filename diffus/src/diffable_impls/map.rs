@@ -9,7 +9,7 @@ macro_rules! map_impl {
             impl<'a, K: Eq + $key_constraint + 'a, V: Diffable<'a> + 'a> Diffable<'a> for $typ<K, V> {
                 type Diff = $typ<&'a K, map::Edit<'a, V>>;
 
-                fn diff(&'a self, other: &'a Self) -> Edit<Self::Diff> {
+                fn diff(&'a self, other: &'a Self) -> Edit<Self> {
                     let intersection = self
                         .iter()
                         .filter_map(|(k, v)| Some((k, (v, other.get(k)?))));
@@ -27,7 +27,7 @@ macro_rules! map_impl {
                     if value_diffs.values().any(|v| !v.is_copy()) {
                         Edit::Change(value_diffs)
                     } else {
-                        Edit::Copy
+                        Edit::Copy(self)
                     }
                 }
             }

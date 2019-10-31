@@ -12,7 +12,7 @@ fn edit_fields(fields: &syn::Fields, lifetime: &syn::Lifetime) -> Output {
             vis,
             ..
         } => quote! {
-            #vis #ident: diffus::edit::Edit<<#ty as diffus::Diffable<#lifetime>>::Diff>
+            #vis #ident: diffus::edit::Edit<#lifetime, #ty>
         },
         syn::Field {
             ident: None,
@@ -20,7 +20,7 @@ fn edit_fields(fields: &syn::Fields, lifetime: &syn::Lifetime) -> Output {
             vis,
             ..
         } => quote! {
-            #vis diffus::edit::Edit<<#ty as diffus::Diffable<#lifetime>>::Diff>
+            #vis diffus::edit::Edit<#lifetime, #ty>
         },
     });
 
@@ -79,11 +79,11 @@ fn matches_all_copy(fields: &syn::Fields) -> Output {
     let edit_fields_copy = fields.iter().enumerate().map(|enumerated_field| {
         let field_ident = field_ident(enumerated_field, "");
 
-        quote! { #field_ident @ diffus::edit::Edit::Copy }
+        quote! { #field_ident @ diffus::edit::Edit::Copy(_) }
     });
 
     quote! {
-        ( #(#edit_fields_copy),* ) => diffus::edit::Edit::Copy
+        ( #(#edit_fields_copy),* ) => diffus::edit::Edit::Copy(self)
     }
 }
 
@@ -101,7 +101,7 @@ fn field_diffs(fields: &syn::Fields) -> Output {
         };
 
         quote! {
-            self.#field_name.diff(&other.#field_name)
+            diffus::Diffable::diff(&self.#field_name, &other.#field_name)
         }
     });
 
@@ -250,7 +250,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                                 #ident::#variant_ident,
                                 #ident::#variant_ident
                             ) => {
-                                diffus::edit::Edit::Copy
+                                diffus::edit::Edit::Copy(self)
                             }
                         }
                     },
@@ -266,7 +266,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 impl<#impl_lifetime> diffus::Diffable<#impl_lifetime> for #ident <#data_lifetime> where #where_clause {
                     type Diff = diffus::edit::enm::Edit<#impl_lifetime, Self, #edited_ident <#unit_enum_impl_lifetime>>;
 
-                    fn diff(&#impl_lifetime self, other: &#impl_lifetime Self) -> diffus::edit::Edit<Self::Diff> {
+                    fn diff(&#impl_lifetime self, other: &#impl_lifetime Self) -> diffus::edit::Edit<#impl_lifetime, Self> {
                         match (self, other) {
                             #(#variants_matches,)*
                             (self_variant, other_variant) => diffus::edit::Edit::Change(diffus::edit::enm::Edit::VariantChanged(
@@ -294,7 +294,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         impl<#impl_lifetime> diffus::Diffable<#impl_lifetime> for #ident <#data_lifetime> where #where_clause {
                             type Diff = #edited_ident<#impl_lifetime>;
 
-                            fn diff(&#impl_lifetime self, other: &#impl_lifetime Self) -> diffus::edit::Edit<Self::Diff> {
+                            fn diff(&#impl_lifetime self, other: &#impl_lifetime Self) -> diffus::edit::Edit<#impl_lifetime, Self> {
                                 match ( #field_diffs ) {
                                     #matches_all_copy,
                                     ( #field_idents ) => diffus::edit::Edit::Change(
@@ -313,7 +313,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         impl<#impl_lifetime> diffus::Diffable<#impl_lifetime> for #ident <#data_lifetime> where #where_clause {
                             type Diff = #edited_ident<#impl_lifetime>;
 
-                            fn diff(&#impl_lifetime self, other: &#impl_lifetime Self) -> diffus::edit::Edit<Self::Diff> {
+                            fn diff(&#impl_lifetime self, other: &#impl_lifetime Self) -> diffus::edit::Edit<#impl_lifetime, Self> {
                                 match ( #field_diffs ) {
                                     #matches_all_copy,
                                     ( #field_idents ) => diffus::edit::Edit::Change(
@@ -332,8 +332,8 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         impl<#impl_lifetime> diffus::Diffable<#impl_lifetime> for #ident< > where #where_clause {
                             type Diff = #edited_ident;
 
-                            fn diff(&#impl_lifetime self, other: &#impl_lifetime Self) -> diffus::edit::Edit<Self::Diff> {
-                                diffus::edit::Edit::Copy
+                            fn diff(&#impl_lifetime self, other: &#impl_lifetime Self) -> diffus::edit::Edit<#impl_lifetime, Self> {
+                                diffus::edit::Edit::Copy(self)
                             }
                         }
                     }
