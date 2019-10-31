@@ -1,6 +1,6 @@
 [package]
 name = "diffus"
-version = "0.2.0"
+version = "0.3.0"
 authors = [
     "Jim Holmström <jim.holmstroem@gmail.com>",
     "Johan Gardell <736172+gardell@users.noreply.github.com>",
