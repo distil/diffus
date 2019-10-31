@@ -46,7 +46,7 @@ cargo_publish () {
         -exec sed -i 's/^version = .*$/version = "'"${VERSION}"'"/g' '{}' \; \
         -exec git add '{}' \;
 
-    git diff
+    git diff origin/master
 
     read -r -p "Deploying ${VERSION}, are you sure? [y/N]? " response
     case "$response" in
