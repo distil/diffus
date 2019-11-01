@@ -147,6 +147,11 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
     let default_lifetime = syn::parse_str::<syn::Lifetime>("'diffus_a").unwrap();
     let impl_lifetime = data_lifetime.unwrap_or(&default_lifetime);
 
+    #[cfg(feature = "serialize-impl")]
+    let derive_serialize = Some(quote! { #[derive(serde::Serialize)] });
+    #[cfg(not(feature = "serialize-impl"))]
+    let derive_serialize: Option<proc_macro2::TokenStream> = None;
+
     proc_macro::TokenStream::from(match input.data {
         syn::Data::Enum(syn::DataEnum { variants, .. }) => {
             let edit_variants = variants.iter().map(|syn::Variant { ident, fields, .. }| {
@@ -258,7 +263,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             });
 
             quote! {
-                #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
+                #derive_serialize
                 #vis enum #edited_ident <#unit_enum_impl_lifetime> where #where_clause {
                     #(#edit_variants),*
                 }
@@ -286,7 +291,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
             match fields {
                 syn::Fields::Named(_) => {
                     quote! {
-                        #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
+                        #derive_serialize
                         #vis struct #edited_ident<#impl_lifetime> where #where_clause {
                             #edit_fields
                         }
@@ -307,7 +312,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
                 syn::Fields::Unnamed(_) => {
                     quote! {
-                        #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
+                        #derive_serialize
                         #vis struct #edited_ident<#impl_lifetime> ( #edit_fields ) where #where_clause;
 
                         impl<#impl_lifetime> diffus::Diffable<#impl_lifetime> for #ident <#data_lifetime> where #where_clause {
@@ -326,7 +331,7 @@ pub fn derive_diffus(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
                 syn::Fields::Unit => {
                     quote! {
-                        #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
+                        #derive_serialize
                         #vis struct #edited_ident< > where #where_clause;
 
                         impl<#impl_lifetime> diffus::Diffable<#impl_lifetime> for #ident< > where #where_clause {
