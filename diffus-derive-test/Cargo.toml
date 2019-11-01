@@ -27,4 +27,4 @@ serde_json = { version = "1.0", optional = true }
 [features]
 default = []
 
-serialize-impl = [ "serde", "serde_json" ]
+serialize-impl = [ "diffus-derive/serialize-impl", "serde", "serde_json" ]
