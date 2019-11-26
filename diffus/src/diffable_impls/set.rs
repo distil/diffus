@@ -36,12 +36,7 @@ macro_rules! set_impl {
 }
 
 use std::{
-    collections::{
-        BTreeSet,
-        BTreeMap,
-        HashSet,
-        HashMap,
-    },
+    collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     hash::Hash,
 };
 set_impl! {
@@ -50,7 +45,7 @@ set_impl! {
 }
 
 #[cfg(feature = "indexmap-impl")]
-use indexmap::{IndexSet, IndexMap};
+use indexmap::{IndexMap, IndexSet};
 #[cfg(feature = "indexmap-impl")]
 set_impl! { (IndexSet, Hash, IndexMap) }
 
@@ -60,10 +55,8 @@ mod tests {
 
     #[test]
     fn example() {
-        let unity: std::collections::HashSet<_, _> =
-            [1, 2, 3].iter().cloned().collect();
-        let not_unity: std::collections::HashSet<_, _> =
-            [1, 2, 4].iter().cloned().collect();
+        let unity: std::collections::HashSet<_, _> = [1, 2, 3].iter().cloned().collect();
+        let not_unity: std::collections::HashSet<_, _> = [1, 2, 4].iter().cloned().collect();
 
         if let Edit::Change(diff) = unity.diff(&not_unity) {
             assert!(diff[&1].is_copy());
