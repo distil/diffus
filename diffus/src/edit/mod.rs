@@ -1,6 +1,7 @@
 pub mod collection;
 pub mod enm;
 pub mod map;
+pub mod set;
 
 use crate::Diffable;
 
