@@ -12,7 +12,7 @@ macro_rules! set_impl {
                 fn diff(&'a self, other: &'a Self) -> Edit<Self> {
                     let intersection = self
                         .iter()
-                        .filter(|k| other.contains(k));
+                        .filter(|k| other.contains(*k));
 
                     let unique_self = self.iter().filter(|k| !other.contains(*k));
 
