@@ -7,7 +7,7 @@ pub mod string;
 
 use crate::{edit, Diffable};
 
-impl<'a, T: Diffable<'a> + 'a> Diffable<'a> for &'a T {
+impl<'a, T: Diffable<'a> + ?Sized + 'a> Diffable<'a> for &'a T {
     type Diff = T::Diff;
 
     fn diff(&'a self, other: &'a Self) -> edit::Edit<'a, Self> {

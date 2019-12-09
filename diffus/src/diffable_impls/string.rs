@@ -1,36 +1,10 @@
-use crate::{edit, lcs, Diffable};
-
-#[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
-#[derive(Debug, PartialEq, Eq)]
-pub enum Edit {
-    Copy(char),
-    Insert(char),
-    Remove(char),
-}
-
-impl From<lcs::Edit<char>> for Edit {
-    fn from(edit: lcs::Edit<char>) -> Self {
-        use lcs::Edit::*;
-        match edit {
-            Same(left, _) => Self::Copy(left),
-            Insert(value) => Self::Insert(value),
-            Remove(value) => Self::Remove(value),
-        }
-    }
-}
-
-impl Edit {
-    pub fn is_copy(&self) -> bool {
-        if let Self::Copy(_) = self {
-            true
-        } else {
-            false
-        }
-    }
-}
+use crate::{
+    edit::{self, string},
+    lcs, Diffable,
+};
 
 impl<'a> Diffable<'a> for str {
-    type Diff = Vec<Edit>;
+    type Diff = Vec<string::Edit>;
 
     fn diff(&'a self, other: &'a Self) -> edit::Edit<Self> {
         let s = lcs::lcs(
@@ -42,7 +16,7 @@ impl<'a> Diffable<'a> for str {
         .map(Into::into)
         .collect::<Vec<_>>();
 
-        if s.iter().all(Edit::is_copy) {
+        if s.iter().all(string::Edit::is_copy) {
             edit::Edit::Copy(self)
         } else {
             edit::Edit::Change(s)
@@ -63,10 +37,10 @@ impl<'a> Diffable<'a> for String {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::edit::{self, string};
 
     #[test]
-    fn diff() {
+    fn string() {
         use super::Diffable;
 
         let left = "XMJYAUZ".to_owned();
@@ -77,16 +51,45 @@ mod tests {
             assert_eq!(
                 diff.into_iter().collect::<Vec<_>>(),
                 vec![
-                    Edit::Remove('X'),
-                    Edit::Copy('M'),
-                    Edit::Insert('Z'),
-                    Edit::Copy('J'),
-                    Edit::Remove('Y'),
-                    Edit::Copy('A'),
-                    Edit::Insert('W'),
-                    Edit::Insert('X'),
-                    Edit::Copy('U'),
-                    Edit::Remove('Z')
+                    string::Edit::Remove('X'),
+                    string::Edit::Copy('M'),
+                    string::Edit::Insert('Z'),
+                    string::Edit::Copy('J'),
+                    string::Edit::Remove('Y'),
+                    string::Edit::Copy('A'),
+                    string::Edit::Insert('W'),
+                    string::Edit::Insert('X'),
+                    string::Edit::Copy('U'),
+                    string::Edit::Remove('Z')
+                ]
+            );
+        } else {
+            unreachable!()
+        }
+    }
+
+    #[test]
+    fn str() {
+        use super::Diffable;
+
+        let left = "XMJYAUZ";
+        let right = "MZJAWXU";
+
+        let diff = left.diff(&right);
+        if let edit::Edit::Change(diff) = diff {
+            assert_eq!(
+                diff.into_iter().collect::<Vec<_>>(),
+                vec![
+                    string::Edit::Remove('X'),
+                    string::Edit::Copy('M'),
+                    string::Edit::Insert('Z'),
+                    string::Edit::Copy('J'),
+                    string::Edit::Remove('Y'),
+                    string::Edit::Copy('A'),
+                    string::Edit::Insert('W'),
+                    string::Edit::Insert('X'),
+                    string::Edit::Copy('U'),
+                    string::Edit::Remove('Z')
                 ]
             );
         } else {
