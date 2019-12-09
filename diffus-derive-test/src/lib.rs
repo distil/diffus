@@ -361,4 +361,26 @@ mod test {
             );
         }
     }
+
+    #[test]
+    fn struct_containing_str() {
+        #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
+        #[derive(Diffus, Debug, PartialEq)]
+        struct A<'a> {
+            a: &'a str,
+        }
+
+        let a = A { a: "a" };
+        let ap = A { a: "a'" };
+
+        let diff = a.diff(&ap);
+        let actual = diff.change().unwrap().a.change().unwrap();
+
+        use diffus::edit::string;
+
+        assert_eq!(
+            actual,
+            &vec![string::Edit::Copy('a'), string::Edit::Insert('\''),]
+        );
+    }
 }

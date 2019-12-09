@@ -2,6 +2,7 @@ pub mod collection;
 pub mod enm;
 pub mod map;
 pub mod set;
+pub mod string;
 
 use crate::Diffable;
 
