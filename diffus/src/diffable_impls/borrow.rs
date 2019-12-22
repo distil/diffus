@@ -1,5 +1,16 @@
-use std::borrow::Borrow;
 use crate::{edit, Diffable};
+use std::borrow::Borrow;
+
+fn diff_borrowable<'a, T, C>(left: &'a C, right: &'a C) -> edit::Edit<'a, C>
+where
+    T: Diffable<'a> + ?Sized + 'a,
+    C: Borrow<T> + Diffable<'a, Diff = T::Diff> + ?Sized,
+{
+    match left.borrow().diff(right.borrow()) {
+        edit::Edit::Copy(_) => edit::Edit::Copy(left),
+        edit::Edit::Change(diff) => edit::Edit::Change(diff),
+    }
+}
 
 macro_rules! borrow_impl {
     ($($typ:ident),*) => {
@@ -8,12 +19,7 @@ macro_rules! borrow_impl {
                 type Diff = T::Diff;
 
                 fn diff(&'a self, other: &'a Self) -> edit::Edit<'a, Self> {
-                    let self_: &T = self.borrow();
-                    let other: &T = other.borrow();
-                    match self_.diff(other) {
-                        edit::Edit::Copy(_) => edit::Edit::Copy(self),
-                        edit::Edit::Change(diff) => edit::Edit::Change(diff),
-                    }
+                    diff_borrowable::<T, Self>(self, other)
                 }
             }
         )*
@@ -32,10 +38,7 @@ impl<'a, T: Diffable<'a> + ?Sized + 'a> Diffable<'a> for &'a T {
     type Diff = T::Diff;
 
     fn diff(&'a self, other: &'a Self) -> edit::Edit<'a, Self> {
-        match (*self).diff(*other) {
-            edit::Edit::Copy(_) => edit::Edit::Copy(self),
-            edit::Edit::Change(diff) => edit::Edit::Change(diff),
-        }
+        diff_borrowable::<T, Self>(self, other)
     }
 }
 
