@@ -26,10 +26,7 @@ macro_rules! borrow_impl {
     }
 }
 
-use std::{
-    rc::Rc,
-    sync::Arc,
-};
+use std::{rc::Rc, sync::Arc};
 borrow_impl! {
     Box, Rc, Arc
 }
@@ -52,10 +49,7 @@ mod tests {
         let right = 37;
 
         if let edit::Edit::Change((left, right)) = Box::new(left).diff(&Box::new(right)) {
-            assert_eq!(
-                (left, right),
-                (&13, &37)
-            );
+            assert_eq!((left, right), (&13, &37));
         }
     }
 
@@ -65,10 +59,7 @@ mod tests {
         let right = 37;
 
         if let edit::Edit::Change((left, right)) = Rc::new(left).diff(&Rc::new(right)) {
-            assert_eq!(
-                (left, right),
-                (&13, &37)
-            );
+            assert_eq!((left, right), (&13, &37));
         }
     }
 
@@ -78,10 +69,7 @@ mod tests {
         let right = 37;
 
         if let edit::Edit::Change((left, right)) = Arc::new(left).diff(&Arc::new(right)) {
-            assert_eq!(
-                (left, right),
-                (&13, &37)
-            );
+            assert_eq!((left, right), (&13, &37));
         }
     }
 
@@ -91,13 +79,7 @@ mod tests {
         let right = 37;
 
         if let edit::Edit::Change((left, right)) = (&left).diff(&(&right)) {
-            assert_eq!(
-                (left, right),
-                (&13, &37)
-            );
+            assert_eq!((left, right), (&13, &37));
         }
     }
-
-
-
 }
