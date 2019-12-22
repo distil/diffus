@@ -8,7 +8,9 @@ macro_rules! borrow_impl {
                 type Diff = T::Diff;
 
                 fn diff(&'a self, other: &'a Self) -> edit::Edit<'a, Self> {
-                    match self.as_ref().borrow().diff(other.as_ref().borrow()) {
+                    let self_: &T = self.borrow();
+                    let other: &T = other.borrow();
+                    match self_.diff(other) {
                         edit::Edit::Copy(_) => edit::Edit::Copy(self),
                         edit::Edit::Change(diff) => edit::Edit::Change(diff),
                     }
