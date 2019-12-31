@@ -4,6 +4,8 @@ set -o errexit -o nounset -o pipefail -o xtrace
 
 VERSION="$1"
 
+command -v jq > /dev/null
+
 cargo_publish () {
     (
         cd $1
@@ -55,6 +57,7 @@ cargo_publish () {
             git push origin "${VERSION}"
             git push origin master
             cargo_publish diffus-derive
+            ./wait_for_crate.sh diffus-derive "${VERSION}"
             cargo_publish diffus
             ;;
         *)
