@@ -34,8 +34,6 @@ cargo_publish () {
 
     ./test.sh
 
-    cargo fmt -- --check
-
     git fetch --tags
     git tag -l | sed '/^'"${VERSION}"'$/{q2}' > /dev/null \
         || (echo "${VERSION} already exists"; exit 4)
