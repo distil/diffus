@@ -5,7 +5,7 @@ fn diff_borrowable<'a, T, C, D>(left: &'a C, right: &'a C) -> edit::Edit<'a, C>
 where
     T: Diffable<'a> + ?Sized + 'a,
     C: Borrow<T> + Diffable<'a, Diff = D> + ?Sized,
-    D: From<T::Diff>
+    D: From<T::Diff>,
 {
     match left.borrow().diff(right.borrow()) {
         edit::Edit::Copy(_) => edit::Edit::Copy(left),
