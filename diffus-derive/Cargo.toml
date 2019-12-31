@@ -1,6 +1,6 @@
 [package]
 name = "diffus-derive"
-version = "0.8.2"
+version = "0.8.3"
 authors = [
     "Jim Holmström <jim.holmstroem@gmail.com>",
     "Johan Gardell <736172+gardell@users.noreply.github.com>",
