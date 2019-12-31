@@ -3,8 +3,7 @@ Finds the difference between two instances of any data structure.
 
 ## Diffus in action
 ```rust
-use diffus_derive::Diffus;
-use diffus::{edit, Diffable};
+use diffus::{edit, Diffable, Diffus};
 
 #[derive(Diffus)]
 struct Point {
@@ -66,8 +65,7 @@ Strings are considered as collections.
 The possible edits of a collection are `Copy`, `Insert`, `Remove`, `Change`.
 
 ```rust
-use diffus_derive::Diffus;
-use diffus::{edit::{self, collection}, Same, Diffable};
+use diffus::{edit::{self, collection}, Same, Diffable, Diffus};
 
 #[derive(Diffus, Debug)]
 struct Identified {
@@ -135,8 +133,7 @@ Difference between two enums works as expected, it separates variant changes fro
 Possible edits of an enum are `Copy`, `VariantChanged`, `AssociatedChanged`.
 
 ```rust
-use diffus_derive::Diffus;
-use diffus::{edit, Diffable};
+use diffus::{edit, Diffable, Diffus};
 
 #[derive(Diffus, Debug, PartialEq)]
 enum Test {
