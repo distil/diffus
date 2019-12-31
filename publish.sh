@@ -54,8 +54,8 @@ cargo_publish () {
             git tag "${VERSION}"
             git push origin "${VERSION}"
             git push origin master
-            cargo_publish diffus
             cargo_publish diffus-derive
+            cargo_publish diffus
             ;;
         *)
             git checkout .
