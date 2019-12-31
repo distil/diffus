@@ -120,6 +120,21 @@ mod test {
     }
 
     /*
+     * Verify enum refering to own type via box
+     */
+    #[cfg_attr(feature = "serialize-impl", derive(serde::Serialize))]
+    #[derive(Debug, Diffus, PartialEq)]
+    enum RecursiveBox {
+        Boxed(Box<RecursiveBox>),
+    }
+
+    impl diffus::Same for RecursiveBox {
+        fn same(&self, other: &Self) -> bool {
+            false
+        }
+    }
+
+    /*
      * Verify enums with only Unit variants.
      */
     #[derive(Diffus)]
