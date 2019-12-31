@@ -2,9 +2,7 @@
 #[allow(unused_variables)]
 #[allow(dead_code)]
 mod test {
-    use diffus_derive::Diffus;
-
-    use diffus::{self, edit, Diffable};
+    use diffus::{self, edit, Diffable, Diffus, Same};
 
     mod hide {
         use super::*;
@@ -43,7 +41,7 @@ mod test {
         value: u32,
     }
 
-    impl diffus::Same for Identified {
+    impl Same for Identified {
         fn same(&self, other: &Self) -> bool {
             self.id == other.id
         }
@@ -71,7 +69,7 @@ mod test {
 
         let diff = left.diff(&right);
 
-        use diffus::edit::{self, collection};
+        use edit::{self, collection};
 
         if let edit::Edit::Change(diff) = diff {
             let diff = diff.into_iter().collect::<Vec<_>>();
@@ -141,7 +139,7 @@ mod test {
         /*
          * Verify that the visibility of the Edited version is inherited.
          */
-        use diffus_derive::Diffus;
+        use diffus::Diffus;
 
         #[derive(Diffus)]
         pub struct VisTestStructUnit;
@@ -173,11 +171,10 @@ mod test {
 
         let diff = left.diff(&right);
 
-        if let diffus::edit::enm::Edit::AssociatedChanged(EditedNestedTest::T { test }) =
+        if let edit::enm::Edit::AssociatedChanged(EditedNestedTest::T { test }) =
             diff.change().unwrap()
         {
-            if let diffus::edit::enm::Edit::AssociatedChanged(EditedTest::C { x }) =
-                test.change().unwrap()
+            if let edit::enm::Edit::AssociatedChanged(EditedTest::C { x }) = test.change().unwrap()
             {
                 assert_eq!(x.change(), Some(&(&32, &43)));
             } else {
@@ -220,9 +217,8 @@ mod test {
             x: 42,
             y: "Frodo Baggins".to_owned(),
         };
-        if let diffus::edit::Edit::Change(diffus::edit::enm::Edit::AssociatedChanged(
-            EditedTest::Cd { x, y },
-        )) = left.diff(&right)
+        if let edit::Edit::Change(edit::enm::Edit::AssociatedChanged(EditedTest::Cd { x, y })) =
+            left.diff(&right)
         {
             assert!(x.is_copy());
             assert!(y.is_change());
@@ -238,9 +234,7 @@ mod test {
             y: "Bilbo Baggins".to_owned(),
         };
         let right = Test::B("Frodo Baggins".to_owned());
-        if let diffus::edit::Edit::Change(diffus::edit::enm::Edit::VariantChanged(l, r)) =
-            left.diff(&right)
-        {
+        if let edit::Edit::Change(edit::enm::Edit::VariantChanged(l, r)) = left.diff(&right) {
             assert_eq!(&left, l);
             assert_eq!(&right, r);
         } else {
@@ -385,7 +379,7 @@ mod test {
         let diff = a.diff(&ap);
         let actual = diff.change().unwrap().a.change().unwrap();
 
-        use diffus::edit::string;
+        use edit::string;
 
         assert_eq!(
             actual,

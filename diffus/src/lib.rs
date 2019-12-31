@@ -13,3 +13,7 @@ pub trait Diffable<'a> {
 pub trait Same {
     fn same(&self, other: &Self) -> bool;
 }
+
+#[cfg(feature = "derive")]
+#[doc(hidden)]
+pub use diffus_derive::*;

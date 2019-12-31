@@ -18,8 +18,7 @@ edition = "2018"
 
 
 [dependencies]
-diffus = { path = "../diffus" }
-diffus-derive = { path = "../diffus-derive" }
+diffus = { path = "../diffus", features = [ "derive" ]}
 
 serde = { version = "1.0", features = [ "derive" ], optional = true }
 serde_json = { version = "1.0", optional = true }
@@ -27,4 +26,4 @@ serde_json = { version = "1.0", optional = true }
 [features]
 default = []
 
-serialize-impl = [ "diffus-derive/serialize-impl", "serde", "serde_json" ]
+serialize-impl = [ "diffus/serialize-impl", "serde", "serde_json" ]
