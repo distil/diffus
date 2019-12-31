@@ -10,7 +10,12 @@ cargo_publish () {
     (
         cd $1
 
-        cargo package
+        sleep 1
+        until cargo package; do
+            printf 'trying to build package again'
+            sleep 1
+        done
+
         echo "Files added:"
         cargo package --list
 
@@ -57,10 +62,7 @@ cargo_publish () {
             git push origin "${VERSION}"
             git push origin master
             cargo_publish diffus-derive
-            until cargo_publish diffus; do
-                printf '.'
-                sleep 1
-            done
+            cargo_publish diffus
             ;;
         *)
             git checkout .
