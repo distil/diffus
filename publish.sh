@@ -57,8 +57,10 @@ cargo_publish () {
             git push origin "${VERSION}"
             git push origin master
             cargo_publish diffus-derive
-            ./wait_for_crate.sh diffus-derive "${VERSION}"
-            cargo_publish diffus
+            until cargo_publish diffus; do
+                printf '.'
+                sleep 1
+            done
             ;;
         *)
             git checkout .
