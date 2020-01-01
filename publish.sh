@@ -44,7 +44,7 @@ cargo_publish () {
         -iname Cargo.toml \
         -not -path "./target/*" \
         -exec sed -i 's/^version = .*$/version = "'"${VERSION}"'"/g' '{}' \; \
-        -exec sed -i 's/^\(diffus-derive = { version = "\)\([0-9]*\.[0-9]*\.[0-9]*\)\(".*\)$/\1'"${VERSION}"'\3/g' '{}' \; \
+        -exec sed -i 's/^\(diffus-derive = { version = "\)\(=[0-9]*\.[0-9]*\.[0-9]*\)\(".*\)$/\1='"${VERSION}"'\3/g' '{}' \; \
         -exec git add '{}' \;
 
     git diff origin/master
