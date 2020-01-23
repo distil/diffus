@@ -18,19 +18,30 @@ impl<T> Edit<T> {
     }
 }
 
-fn c_matrix<T: Same, I: Iterator<Item = T>, J: Iterator<Item = T>>(
+fn c_matrix<T: Same, I, J>(
     x: impl Fn() -> I,
     y: impl Fn() -> J,
     x_len: usize,
     y_len: usize,
-) -> crate::twodvec::TwoDVec<usize> {
-    let width = x_len + 1;
-    let height = y_len + 1;
+) -> (usize, crate::twodvec::TwoDVec<usize>, usize)
+where
+    I: DoubleEndedIterator<Item = T>,
+    J: DoubleEndedIterator<Item = T>,
+{
+    let prefix_eq = x().zip(y()).take_while(|(x, y)| x.same(y)).count();
+    let suffix_eq = x()
+        .rev()
+        .zip(y().rev())
+        .take_while(|(x, y)| x.same(y))
+        .count();
+
+    let width = x_len.saturating_sub(prefix_eq + suffix_eq) + 1;
+    let height = y_len.saturating_sub(prefix_eq + suffix_eq) + 1;
 
     let mut c = crate::twodvec::TwoDVec::new(0, width, height);
 
-    for (i, x) in x().enumerate() {
-        for (j, y) in y().enumerate() {
+    for (i, x) in x().skip(prefix_eq).take(width - 1).enumerate() {
+        for (j, y) in y().skip(prefix_eq).take(height - 1).enumerate() {
             c[j + 1][i + 1] = if x.same(&y) {
                 c[j][i] + 1
             } else {
@@ -39,7 +50,7 @@ fn c_matrix<T: Same, I: Iterator<Item = T>, J: Iterator<Item = T>>(
         }
     }
 
-    c
+    (prefix_eq, c, suffix_eq)
 }
 
 fn lcs_base<T: Same>(
@@ -99,11 +110,29 @@ pub(crate) fn lcs<
     x_len: usize,
     y_len: usize,
 ) -> impl Iterator<Item = Edit<T>> {
-    lcs_base(
-        c_matrix(|| x(), || y(), x_len, y_len),
-        itertools::put_back(x().rev()),
-        itertools::put_back(y().rev()),
-    )
+    let (prefix_eq, c, suffix_eq) = c_matrix(&x, &y, x_len, y_len);
+
+    x().zip(y())
+        .take(prefix_eq)
+        .map(|(x, y)| Edit::Same(x, y))
+        .chain(lcs_base(
+            c,
+            itertools::put_back(
+                x().rev()
+                    .skip(suffix_eq)
+                    .take(x_len.saturating_sub(prefix_eq + suffix_eq)),
+            ),
+            itertools::put_back(
+                y().rev()
+                    .skip(suffix_eq)
+                    .take(y_len.saturating_sub(prefix_eq + suffix_eq)),
+            ),
+        ))
+        .chain(
+            x().skip(x_len - suffix_eq)
+                .zip(y().skip(y_len - suffix_eq))
+                .map(|(x, y)| Edit::Same(x, y)),
+        )
 }
 
 // FIXME move out from lcs
