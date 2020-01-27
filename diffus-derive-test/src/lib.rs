@@ -1,5 +1,4 @@
 #[cfg(test)]
-#[allow(unused_variables)]
 #[allow(dead_code)]
 mod test {
     use diffus::{self, edit, Diffable, Diffus, Same};

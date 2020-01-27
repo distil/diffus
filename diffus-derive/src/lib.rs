@@ -76,10 +76,8 @@ fn renamed_field_idents(fields: &syn::Fields, prefix: &str) -> Output {
 }
 
 fn matches_all_copy(fields: &syn::Fields) -> Output {
-    let edit_fields_copy = fields.iter().enumerate().map(|enumerated_field| {
-        let field_ident = field_ident(enumerated_field, "");
-
-        quote! { #field_ident @ diffus::edit::Edit::Copy(_) }
+    let edit_fields_copy = fields.iter().enumerate().map(|_| {
+        quote! { diffus::edit::Edit::Copy(_) }
     });
 
     quote! {
