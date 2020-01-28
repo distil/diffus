@@ -28,12 +28,32 @@ where
     I: DoubleEndedIterator<Item = T>,
     J: DoubleEndedIterator<Item = T>,
 {
-    let prefix_eq = x().zip(y()).take_while(|(x, y)| x.same(y)).count();
-    let suffix_eq = x()
-        .rev()
-        .zip(y().rev())
-        .take_while(|(x, y)| x.same(y))
-        .count();
+    let mut prefix_eq = 0;
+    let mut suffix_eq = 0;
+    {
+        let mut x_iter = x();
+        let mut y_iter = y();
+        // We must not compute an overlapping `prefix_eq` and `suffix_eq` so we only check the suffix
+        // if there is something that is not the same in the middle of the iterators
+        let mut check_suffix = false;
+        loop {
+            match (x_iter.next(), y_iter.next()) {
+                (Some(x), Some(y)) if x.same(&y) => prefix_eq += 1,
+                (Some(_), Some(_)) => {
+                    check_suffix = true;
+                    break;
+                }
+                (None, _) | (_, None) => break,
+            }
+        }
+        if check_suffix {
+            suffix_eq = x_iter
+                .rev()
+                .zip(y_iter.rev())
+                .take_while(|(x, y)| x.same(y))
+                .count();
+        }
+    }
 
     let width = x_len.saturating_sub(prefix_eq + suffix_eq) + 1;
     let height = y_len.saturating_sub(prefix_eq + suffix_eq) + 1;
