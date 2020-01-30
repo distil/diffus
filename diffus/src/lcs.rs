@@ -28,12 +28,25 @@ where
     I: DoubleEndedIterator<Item = T>,
     J: DoubleEndedIterator<Item = T>,
 {
-    let prefix_eq = x().zip(y()).take_while(|(x, y)| x.same(y)).count();
-    let suffix_eq = x()
-        .rev()
-        .zip(y().rev())
+    let mut x_iter = x();
+    let mut y_iter = y();
+    let prefix_eq = x_iter
+        .by_ref()
+        .zip(y_iter.by_ref())
         .take_while(|(x, y)| x.same(y))
         .count();
+    // Only check the suffix if we did not consume the entirety of either of the iterators
+    // (If one of them are consumed, we would double count elements)
+    let check_suffix = x_len.min(y_len) != prefix_eq;
+    let suffix_eq = if check_suffix {
+        x_iter
+            .rev()
+            .zip(y_iter.rev())
+            .take_while(|(x, y)| x.same(y))
+            .count()
+    } else {
+        0
+    };
 
     let width = x_len.saturating_sub(prefix_eq + suffix_eq) + 1;
     let height = y_len.saturating_sub(prefix_eq + suffix_eq) + 1;

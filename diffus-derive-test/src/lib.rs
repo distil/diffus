@@ -91,6 +91,33 @@ mod test {
         }
     }
 
+    #[test]
+    fn changed_contents() {
+        let left = vec![Identified { id: 1, value: 0 }];
+        let right = vec![Identified { id: 1, value: 1 }];
+
+        let diff = left.diff(&right);
+
+        use edit::{self, collection};
+
+        if let edit::Edit::Change(diff) = diff {
+            let diff = diff.into_iter().collect::<Vec<_>>();
+
+            assert_eq!(diff.len(), 1);
+
+            if let &collection::Edit::Change(EditedIdentified {
+                id: edit::Edit::Copy(&1),
+                value: edit::Edit::Change((&0, &1)),
+            }) = &diff[0]
+            {
+            } else {
+                unreachable!()
+            }
+        } else {
+            unreachable!()
+        }
+    }
+
     #[derive(Diffus)]
     enum NestedTest {
         T { test: Test },
