@@ -28,32 +28,25 @@ where
     I: DoubleEndedIterator<Item = T>,
     J: DoubleEndedIterator<Item = T>,
 {
-    let mut prefix_eq = 0;
-    let mut suffix_eq = 0;
-    {
-        let mut x_iter = x();
-        let mut y_iter = y();
-        // We must not compute an overlapping `prefix_eq` and `suffix_eq` so we only check the suffix
-        // if there is something that is not the same in the middle of the iterators
-        let mut check_suffix = false;
-        loop {
-            match (x_iter.next(), y_iter.next()) {
-                (Some(x), Some(y)) if x.same(&y) => prefix_eq += 1,
-                (Some(_), Some(_)) => {
-                    check_suffix = true;
-                    break;
-                }
-                (None, _) | (_, None) => break,
-            }
-        }
-        if check_suffix {
-            suffix_eq = x_iter
-                .rev()
-                .zip(y_iter.rev())
-                .take_while(|(x, y)| x.same(y))
-                .count();
-        }
-    }
+    let mut x_iter = x();
+    let mut y_iter = y();
+    let prefix_eq = x_iter
+        .by_ref()
+        .zip(y_iter.by_ref())
+        .take_while(|(x, y)| x.same(y))
+        .count();
+    // Only check the suffix if we did not consume the entirety of either of the iterators
+    // (If one of them are consumed, we would double count elements)
+    let check_suffix = x_len.min(y_len) != prefix_eq;
+    let suffix_eq = if check_suffix {
+        x_iter
+            .rev()
+            .zip(y_iter.rev())
+            .take_while(|(x, y)| x.same(y))
+            .count()
+    } else {
+        0
+    };
 
     let width = x_len.saturating_sub(prefix_eq + suffix_eq) + 1;
     let height = y_len.saturating_sub(prefix_eq + suffix_eq) + 1;
