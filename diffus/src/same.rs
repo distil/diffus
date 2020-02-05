@@ -24,6 +24,20 @@ macro_rules! same_for_eq {
 
 same_for_eq! { u8, u16, u32, u64, i8, i16, i32, i64, char, str, String }
 
+macro_rules! same_for_float {
+    ($($typ:ty),*) => {
+        $(
+            impl Same for $typ {
+                fn same(&self, other: &Self) -> bool {
+                    self.to_ne_bytes() == other.to_ne_bytes()
+                }
+            }
+        )*
+    }
+}
+
+same_for_float! { f32, f64 }
+
 #[cfg(feature = "snake_case-impl")]
 same_for_eq! { snake_case::SnakeCase }
 
