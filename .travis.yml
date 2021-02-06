@@ -1,0 +1,10 @@
+cache: cargo
+dist: focal
+language: rust
+rust:
+  - beta
+  - stable
+  - 1.37.0
+
+before_install: rustup component add rustfmt
+script: ./test.sh
