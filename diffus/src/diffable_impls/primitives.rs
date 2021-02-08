@@ -7,7 +7,8 @@ macro_rules! primitive_impl {
                 type Diff = (&'a $typ, &'a $typ);
 
                 fn diff(&'a self, other: &'a Self) -> edit::Edit<Self> {
-                    if self == other {
+                    use crate::Same;
+                    if self.same(other) {
                         edit::Edit::Copy(self)
                     } else {
                         edit::Edit::Change((self, other))
@@ -18,7 +19,7 @@ macro_rules! primitive_impl {
     }
 }
 
-primitive_impl! { i64, i32, i16, i8, u64, u32, u16, u8, char, bool, isize, usize, () }
+primitive_impl! { i64, i32, i16, i8, u64, u32, u16, u8, char, bool, isize, usize, f32, f64, () }
 
 #[cfg(feature = "uuid-impl")]
 primitive_impl! { uuid::Uuid }
