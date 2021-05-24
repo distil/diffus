@@ -412,4 +412,61 @@ mod test {
             &vec![string::Edit::Copy('a'), string::Edit::Insert('\''),]
         );
     }
+
+    mod generics {
+        use diffus::Diffus;
+
+        pub trait Thing {
+            type Foo;
+            type Bar;
+        }
+
+        pub struct ConcreteThing;
+
+        impl Thing for ConcreteThing {
+            type Foo = String;
+            type Bar = i64;
+        }
+
+        #[derive(Diffus)]
+        pub struct TestNamedStruct<A> where A: Thing {
+            pub a: A::Foo,
+            pub inner: i32,
+        }
+
+        #[derive(Diffus)]
+        pub enum TestTuple<A> where A: Thing {
+            Hello {
+                bar: A::Bar,
+            },
+            UnitVariant,
+            TupleVariant(A::Bar, A::Bar),
+        }
+
+        #[derive(Diffus)]
+        pub struct TestUnnamedStruct<A>(pub A::Foo) where A: Thing;
+    }
+
+    #[test]
+    fn test() {
+        use self::generics::{ConcreteThing, TestNamedStruct};
+        use edit::string;
+
+        let a: TestNamedStruct<ConcreteThing> = TestNamedStruct { a: "a".to_string(), inner: 12 };
+        let ap = TestNamedStruct { a: "a'".to_string(), inner: 13 };
+
+        let diff = a.diff(&ap);
+        let actual_a = diff.change().unwrap().a.change().unwrap();
+        let actual_inner = diff.change().unwrap().inner.change().unwrap();
+
+        assert_eq!(
+            actual_a,
+            &vec![string::Edit::Copy('a'), string::Edit::Insert('\''),]
+        );
+
+        assert_eq!(
+            actual_inner,
+            &(&12, &13),
+        );
+    }
 }
