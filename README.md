@@ -19,14 +19,14 @@ fn main() {
     let diff = left_point.diff(&right_point);
 
     match diff {
-        edit::Edit::Copy => println!("point: no difference"),
+        edit::Edit::Copy(_) => println!("point: no difference"),
         edit::Edit::Change(EditedPoint { x, y }) => {
             match x {
-                edit::Edit::Copy => println!("x: no difference"),
+                edit::Edit::Copy(_) => println!("x: no difference"),
                 edit::Edit::Change((left_x, right_x)) => println!("x: {} => {}", left_x, right_x),
             }
             match y {
-                edit::Edit::Copy => println!("y: no difference"),
+                edit::Edit::Copy(_) => println!("y: no difference"),
                 edit::Edit::Change((left_y, right_y)) => println!("y: {} => {}", left_y, right_y),
             }
         }
@@ -103,7 +103,7 @@ fn main() {
     let diff = left.diff(&right);
 
     match diff {
-        edit::Edit::Copy => println!("no difference"),
+        edit::Edit::Copy(_) => println!("no difference"),
         edit::Edit::Change(diff) => {
             diff.into_iter().map(|edit| {
                 match edit {
@@ -113,11 +113,11 @@ fn main() {
                     collection::Edit::Change(EditedIdentified { id, value}) => {
                         println!("changed:");
                         match id {
-                            edit::Edit::Copy => println!("    copy: id"),
+                            edit::Edit::Copy(_) => println!("    copy: id"),
                             edit::Edit::Change((left_id, right_id)) => println!("    id: {} => {}", left_id, right_id),
                         }
                         match value {
-                            edit::Edit::Copy => println!("    copy: value"),
+                            edit::Edit::Copy(_) => println!("    copy: value"),
                             edit::Edit::Change((left_value, right_value)) => println!("    value: {} => {}", left_value, right_value),
                         }
                     }
