@@ -49,3 +49,11 @@ impl<T: Same + ?Sized> Same for &T {
         (*self).same(*other)
     }
 }
+
+impl<T> Same for Box<T>
+    where T: Same {
+    fn same(&self, other: &Self) -> bool {
+        let (a, b): (&T, &T) = (&*self, &*other);
+        a.same(b)
+    }
+}
