@@ -412,4 +412,27 @@ mod test {
             &vec![string::Edit::Copy('a'), string::Edit::Insert('\''),]
         );
     }
+
+    #[test]
+    fn vec_string() {
+        #[derive(Diffus, Debug, PartialEq)]
+        struct A {
+            a: Vec<String>,
+        }
+
+        let a = A { a: vec!["a".to_string()] };
+        let ap = A { a: vec!["ap".to_string()] };
+
+        let diff = a.diff(&ap);
+
+        use edit::collection;
+
+        assert_eq!(
+            diff.change().unwrap().a.change().unwrap(),
+            &vec![
+                collection::Edit::Remove(&"a".to_string()),
+                collection::Edit::Insert(&"ap".to_string())
+            ]
+        )
+    }
 }

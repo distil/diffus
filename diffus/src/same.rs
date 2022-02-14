@@ -22,7 +22,7 @@ macro_rules! same_for_eq {
     }
 }
 
-same_for_eq! { i64, i32, i16, i8, u64, u32, u16, u8, char, str, bool, isize, usize, () }
+same_for_eq! { i64, i32, i16, i8, u64, u32, u16, u8, char, str, String, bool, isize, usize, () }
 
 macro_rules! same_for_float {
     ($($typ:ty),*) => {
